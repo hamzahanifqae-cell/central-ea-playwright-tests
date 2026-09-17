@@ -64,7 +64,7 @@ const headed = process.argv.includes('--headed');
 
     await submit.click();
     console.log('Submitted, waiting for redirect');
-    await page.waitForURL('**/app/ea/**', { timeout: 30_000, waitUntil: 'domcontentloaded' });
+    await page.waitForURL('**/app/**', { timeout: 30_000, waitUntil: 'domcontentloaded' });
 
     fs.mkdirSync('.auth', { recursive: true });
     await context.storageState({ path: AUTH_FILE });
