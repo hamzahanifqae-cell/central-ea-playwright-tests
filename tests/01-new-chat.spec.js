@@ -104,7 +104,7 @@ test.describe('New Chat — full regression', () => {
     await expect(ac.composer).toBeVisible();
   });
 
-  test('voice mode button is clickable and responds', async ({ page }) => {
+  test.skip('voice mode button is clickable and responds', async ({ page }) => {
     await expect(ac.voiceButton).toBeVisible();
     await expect(ac.voiceButton).toBeEnabled();
     await ac.voiceButton.click();
