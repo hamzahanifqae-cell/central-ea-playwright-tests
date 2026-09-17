@@ -1,0 +1,19 @@
+{
+  "name": "m32-central-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright automation for Central EA (app.trycentral.com)",
+  "scripts": {
+    "auth": "node auth.js",
+    "inspect": "node inspect.js",
+    "test": "playwright test",
+    "test:safe": "playwright test -g \"safe\"",
+    "test:headless": "cross-env HEADLESS=1 playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.47.0"
+  }
+}

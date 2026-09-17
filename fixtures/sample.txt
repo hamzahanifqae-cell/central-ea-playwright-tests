@@ -1,0 +1,3 @@
+Product: Widget A
+Price: $49.99
+Category: Electronics

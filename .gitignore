@@ -1,0 +1,11 @@
+﻿node_modules/
+.env
+.auth/
+state.json
+dom-dump/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.chrome-profile/
+login-failure.png
