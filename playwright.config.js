@@ -15,6 +15,7 @@ module.exports = defineConfig({
     ['list'],
     ['html', { open: 'never' }],
     ['./reporters/update-test-cases.js'],
+    ['./reporters/test-summary.js'],
   ],
 
   use: {
@@ -31,7 +32,7 @@ module.exports = defineConfig({
     viewport: null,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: process.env.HEADLESS ? 'off' : 'retain-on-failure',
+    video: 'retain-on-failure',
     actionTimeout: 20_000,
   },
 
