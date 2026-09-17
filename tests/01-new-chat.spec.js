@@ -104,24 +104,6 @@ test.describe('New Chat — full regression', () => {
     await expect(ac.composer).toBeVisible();
   });
 
-  test.skip('voice mode button is clickable and responds', async ({ page }) => {
-    await expect(ac.voiceButton).toBeVisible();
-    await expect(ac.voiceButton).toBeEnabled();
-    await ac.voiceButton.click();
-    await page.waitForLoadState('networkidle');
-
-    // Voice page opens with X close button (lucide-x SVG icon)
-    const closeBtn = page.locator('svg.lucide-x').first();
-    await expect(closeBtn).toBeVisible({ timeout: 10_000 });
-
-    // Click X button to close voice page
-    await closeBtn.click();
-    await page.waitForLoadState('domcontentloaded');
-
-    await ac.ensurePage('New Chat');
-    await expect(ac.composer.first()).toBeVisible();
-  });
-
   // ── SECTION 5: SAVED PROMPTS PANEL ──
 
   test('prompts panel opens and shows content', async ({ page }) => {
