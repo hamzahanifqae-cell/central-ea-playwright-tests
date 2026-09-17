@@ -23,7 +23,7 @@ test.describe('Shared Page', () => {
     test.setTimeout(60_000);
 
     await ac.goto('Shared');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     const emptyMsg = page.getByText('No threads here yet');
     sharedIsEmpty = await emptyMsg.isVisible().catch(() => false);
@@ -46,9 +46,9 @@ test.describe('Shared Page', () => {
     test.setTimeout(90_000);
 
     await ac.goto('Inbox');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await page.getByLabel('Compose new email').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Find an email that is NOT already assigned — try multiple emails
     const emailRows = await page.evaluate(() => {
@@ -77,7 +77,7 @@ test.describe('Shared Page', () => {
       const idx = count > 1 ? 1 : 0;
       await emails.nth(idx).click();
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify email detail view opens (Reply button always present)
     await expect(page.getByRole('button', { name: 'Reply' }).first()).toBeVisible({ timeout: 10_000 });
@@ -90,13 +90,13 @@ test.describe('Shared Page', () => {
     const assignBtn = page.getByLabel('Assign').first();
     await expect(assignBtn).toBeVisible({ timeout: 5000 });
     await assignBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Select "Hamza Hanif (You)" from dropdown
     const selfOption = page.getByText('Hamza Hanif (You)');
     await expect(selfOption).toBeVisible({ timeout: 5000 });
     await selfOption.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   // ╔═══════════════════════════════════════════════════╗
@@ -107,7 +107,7 @@ test.describe('Shared Page', () => {
     test.setTimeout(60_000);
 
     await ac.goto('Shared');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     await expect(page.getByText('No threads here yet')).not.toBeVisible({ timeout: 5000 });
 
@@ -125,7 +125,7 @@ test.describe('Shared Page', () => {
 
     // Navigate to Shared page first (in case prior test failed)
     await ac.goto('Shared');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Click each filter tab using evaluate to avoid sidebar "Shared" link collision
     // Tabs are in content area (x > 250) near the top of the page
@@ -146,7 +146,7 @@ test.describe('Shared Page', () => {
       }, name);
 
       expect(clicked).toBe(true);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -162,27 +162,27 @@ test.describe('Shared Page', () => {
     const count = await threads.count();
     if (count > 0) {
       await threads.nth(count - 1).click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
 
     const commentBtn = page.getByRole('button', { name: 'Add team comments' });
     await expect(commentBtn).toBeVisible({ timeout: 5000 });
     await commentBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const commentInput = page.getByRole('textbox', { name: /Add a comment/i });
     await expect(commentInput).toBeVisible({ timeout: 5000 });
     await commentInput.click();
     await commentInput.pressSequentially('@hamzahanifsqae', { delay: 50 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const mentionOption = page.getByText('hamzahanifsqae').last();
     await expect(mentionOption).toBeVisible({ timeout: 5000 });
     await mentionOption.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     await expect(page.getByText('hamzahanifsqae').first()).toBeVisible({ timeout: 5000 });
   });
@@ -200,11 +200,11 @@ test.describe('Shared Page', () => {
     const removeBtn = page.getByText('Remove', { exact: true }).first();
     await expect(removeBtn).toBeVisible({ timeout: 5000 });
     await removeBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Reload shared page
     await ac.goto('Shared');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify thread count decreased or page is empty
     const emptyMsg = page.getByText('No threads here yet');
@@ -231,7 +231,7 @@ test.describe('Shared Page', () => {
 
     if (count > 0) {
       await threads.first().click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
 
       // Verify detail panel shows "Remove" button
       await expect(page.getByText('Remove').first()).toBeVisible({ timeout: 10_000 });

@@ -18,7 +18,7 @@ test.describe('Inbox — full regression', () => {
     await ac.ensurePage('Inbox');
     // Wait for inbox to fully load — toolbar and email content must be present
     await page.getByLabel('Compose new email').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I1 — inbox loads with filters, toolbar, email list
@@ -63,7 +63,7 @@ test.describe('Inbox — full regression', () => {
         // Clear overlay before each click — this app leaves pointer-event blocks
         await page.evaluate(() => { document.documentElement.style.pointerEvents = ''; });
         await tab.click({ force: true });
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
     // Click Clear button to reset filter selection
@@ -71,17 +71,17 @@ test.describe('Inbox — full regression', () => {
     const clearLink = page.getByText('Clear', { exact: true }).first();
     if (await clearBtn.isVisible().catch(() => false)) {
       await clearBtn.click({ force: true });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     } else if (await clearLink.isVisible().catch(() => false)) {
       await clearLink.click({ force: true });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
   // I3 — manage categories opens with category list
   test('manage categories opens with category list', async ({ page }) => {
     await page.getByLabel('Manage categories').click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const menu = page.locator('[role="menu"]');
     await expect(menu).toBeVisible({ timeout: 5000 });
@@ -94,7 +94,7 @@ test.describe('Inbox — full regression', () => {
     await expect(page.getByLabel('Delete category').first()).toBeVisible();
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I4 — edit category: change label, prompt, color, draft behavior, save, then undo
@@ -103,9 +103,9 @@ test.describe('Inbox — full regression', () => {
 
     // Open manage categories → edit first category
     await page.getByLabel('Manage categories').click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await page.getByLabel('Edit category').first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const dialog = page.locator('[role="dialog"]').filter({ hasText: 'Edit Category' });
     await expect(dialog).toBeVisible({ timeout: 5000 });
@@ -129,13 +129,13 @@ test.describe('Inbox — full regression', () => {
     await labelInput.click();
     await labelInput.fill('');
     await labelInput.pressSequentially('ZZTEST-LABEL', { delay: 15 });
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Change prompt
     await promptInput.click();
     await promptInput.fill('');
     await promptInput.pressSequentially('Test prompt for automation', { delay: 15 });
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Skip VIP sender (just verify the section exists)
     const vipSection = dialog.getByText('VIP Senders').first();
@@ -150,16 +150,16 @@ test.describe('Inbox — full regression', () => {
       const colorBtns = Array.from(btns).filter(b => !b.textContent.trim() && !b.getAttribute('aria-label'));
       if (colorBtns.length > 2) colorBtns[2].click();
     });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Open draft behavior dropdown and change
     await draftSelect.selectOption('never');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Save changes
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10_000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Dismiss overlay: remove pointer-events block via JS, then click away
     await page.evaluate(() => {
@@ -167,15 +167,15 @@ test.describe('Inbox — full regression', () => {
       document.body.style.pointerEvents = '';
     });
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await page.locator('body').click({ position: { x: 10, y: 400 }, force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // --- UNDO ALL CHANGES ---
     await page.getByLabel('Manage categories').click({ force: true, timeout: 10_000 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await page.getByLabel('Edit category').first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const dialog2 = page.locator('[role="dialog"]').filter({ hasText: 'Edit Category' });
     await expect(dialog2).toBeVisible({ timeout: 5000 });
@@ -197,13 +197,13 @@ test.describe('Inbox — full regression', () => {
     await labelInput2.click();
     await labelInput2.fill('');
     await labelInput2.fill(originalLabel);
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Restore original prompt
     await promptInput2.click();
     await promptInput2.fill('');
     await promptInput2.fill(originalPrompt);
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Restore original color (click first color circle)
     await page.evaluate(() => {
@@ -214,16 +214,16 @@ test.describe('Inbox — full regression', () => {
       const colorBtns = Array.from(btns).filter(b => !b.textContent.trim() && !b.getAttribute('aria-label'));
       if (colorBtns.length > 0) colorBtns[0].click();
     });
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Restore original draft behavior
     await draftSelect2.selectOption(originalDraft);
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Save restored values
     await dialog2.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog2).not.toBeVisible({ timeout: 10_000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Clear overlay and navigate fresh for clean state
     await page.evaluate(() => {
@@ -231,33 +231,33 @@ test.describe('Inbox — full regression', () => {
       document.body.style.pointerEvents = '';
     });
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await ac.goto('Inbox');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I5 — delete category: click delete, then Stay on Page
   test('delete category — click Stay on Page', async ({ page }) => {
     await page.getByLabel('Manage categories').click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await page.getByLabel('Delete category').first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Handle browser confirm dialog or in-page confirmation
     const stayBtn = page.getByRole('button', { name: /Stay on Page|Cancel|No/i }).first();
     if (await stayBtn.isVisible().catch(() => false)) {
       await stayBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I6 — filter emails dropdown
   test('filter emails dropdown and options', async ({ page }) => {
     await page.getByLabel('Filter emails').click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/Date Range|From|Quick Filters|Unread/i);
@@ -265,33 +265,33 @@ test.describe('Inbox — full regression', () => {
     const today = page.getByText('Today', { exact: true }).first();
     if (await today.isVisible().catch(() => false)) {
       await today.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const unread = page.getByText('Unread only').first();
     if (await unread.isVisible().catch(() => false)) {
       await unread.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       await unread.click();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I7 — open search and type query
   test('open search and type query', async ({ page }) => {
     test.setTimeout(60_000);
     await page.getByLabel('Open search').click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.getByPlaceholder(/search/i).first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     await searchInput.pressSequentially('test', { delay: 20 });
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for search results or "no results" indicator
     const bodyText = await page.locator('body').innerText();
@@ -304,20 +304,20 @@ test.describe('Inbox — full regression', () => {
     const clearX = page.getByLabel(/close|clear|dismiss/i).first();
     if (await clearSearchBtn.isVisible().catch(() => false)) {
       await clearSearchBtn.click({ force: true });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     } else if (await clearX.isVisible().catch(() => false)) {
       await clearX.click({ force: true });
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     } else {
       await searchInput.fill('');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Ensure search is fully dismissed
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // I8 — switch to detailed view and back (ensures we end in compact view)
@@ -330,21 +330,21 @@ test.describe('Inbox — full regression', () => {
     if (inDetailed) {
       // Currently detailed → switch to compact first, then to detailed, then back to compact
       await compactBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Now in compact — switch to detailed
       const toDetailed = page.getByLabel(/detailed view/i).first();
       await toDetailed.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Back to compact
       const toCompact = page.getByLabel(/compact view/i).first();
       await toCompact.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     } else {
       // Currently compact → switch to detailed
       await detailedBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Verify detailed view has email content
       const bodyText = await page.locator('body').innerText();
@@ -353,7 +353,7 @@ test.describe('Inbox — full regression', () => {
       // Switch back to compact
       const toCompact = page.getByLabel(/compact view/i).first();
       await toCompact.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Verify we toggled back — the button label should say "detailed view" (meaning we're in compact)
@@ -364,7 +364,7 @@ test.describe('Inbox — full regression', () => {
   // I9 — refresh emails
   test('refresh emails and wait', async ({ page }) => {
     await page.getByLabel('Refresh emails').click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Verify page responded to refresh — emails or empty state visible
     const bodyText = await page.locator('body').innerText();
@@ -377,7 +377,7 @@ test.describe('Inbox — full regression', () => {
     test.setTimeout(90_000);
 
     await page.getByLabel('Compose new email').click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const recipients = page.getByPlaceholder('Recipients');
     await expect(recipients).toBeVisible({ timeout: 5000 });
@@ -386,13 +386,13 @@ test.describe('Inbox — full regression', () => {
     const fullScreenBtn = page.getByLabel('Enter full screen');
     if (await fullScreenBtn.isVisible().catch(() => false)) {
       await fullScreenBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Enter Recipients
     await recipients.click();
     await recipients.pressSequentially('test@example.com', { delay: 15 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Dismiss recipient suggestions before moving focus to the subject field.
     await page.keyboard.press('Escape');
@@ -401,14 +401,14 @@ test.describe('Inbox — full regression', () => {
     const subject = page.getByPlaceholder('Subject');
     await subject.click();
     await subject.pressSequentially('ZZTEST Email Subject', { delay: 15 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Type in body
     const bodyArea = page.locator('[contenteditable="true"]').first();
     if (await bodyArea.isVisible().catch(() => false)) {
       await bodyArea.click();
       await page.keyboard.type('This is a test email body for automation.', { delay: 15 });
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Clear the recipient chip within the compose window. The input is removed
@@ -422,18 +422,18 @@ test.describe('Inbox — full regression', () => {
       await recipientChip.click({ force: true });
       await page.keyboard.press('Backspace');
     }
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     await subject.click();
     await page.keyboard.press('Control+a');
     await page.keyboard.press('Backspace');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     if (await bodyArea.isVisible().catch(() => false)) {
       await bodyArea.click();
       await page.keyboard.press('Control+a');
       await page.keyboard.press('Backspace');
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Close compose modal — fields are cleared, so Close (X) should work directly
@@ -443,13 +443,13 @@ test.describe('Inbox — full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // If a discard confirmation appeared, dismiss it
     const confirmDiscard = page.getByRole('button', { name: /^(yes|discard|confirm)$/i }).first();
     if (await confirmDiscard.isVisible().catch(() => false)) {
       await confirmDiscard.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Verify compose is closed
@@ -471,7 +471,7 @@ test.describe('Inbox — full regression', () => {
     };
 
     await clickAccountSelector();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify Accounts panel opens and shows connected account(s)
     const panelInfo = await page.evaluate(() => {
@@ -498,7 +498,7 @@ test.describe('Inbox — full regression', () => {
 
     // Close the panel
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
 });

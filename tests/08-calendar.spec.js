@@ -25,7 +25,7 @@ test.describe('Calendar — full regression', () => {
 
   // C2 — day view shows timeline and Next Up sidebar
   test('day view shows timeline and Next Up sidebar', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/\b(0[3-9]|1[0-9]|2[0-3])\b/);
 
@@ -37,7 +37,7 @@ test.describe('Calendar — full regression', () => {
   // C3 — click event opens detail popup with meeting info
   test('click event opens detail popup with meeting info', async ({ page }) => {
     test.setTimeout(60_000);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const eventNames = [
       'Daily Standup Update',
@@ -51,7 +51,7 @@ test.describe('Calendar — full regression', () => {
       const el = page.getByText(name, { exact: false }).first();
       if (await el.isVisible().catch(() => false)) {
         await el.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         eventClicked = true;
         break;
       }
@@ -61,7 +61,7 @@ test.describe('Calendar — full regression', () => {
       const clickable = page.locator('div.cursor-pointer').first();
       if (await clickable.isVisible().catch(() => false)) {
         await clickable.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         eventClicked = true;
       }
     }
@@ -76,7 +76,7 @@ test.describe('Calendar — full regression', () => {
 
   // C4 — close event detail popup
   test('close event detail popup', async ({ page }) => {
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const rsvpBefore = page.getByText('Attending this meeting?').first();
     const popupOpen = await rsvpBefore.isVisible().catch(() => false);
@@ -85,14 +85,14 @@ test.describe('Calendar — full regression', () => {
       const el = page.getByText(/Daily Standup|Product Pod|Testing/i).first();
       if (await el.isVisible().catch(() => false)) {
         await el.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       } else {
         test.skip(true, 'no event popup to close');
       }
     }
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const rsvpAfter = page.getByText('Attending this meeting?').first();
     const stillVisible = await rsvpAfter.isVisible().catch(() => false);
@@ -106,12 +106,12 @@ test.describe('Calendar — full regression', () => {
     const beforeDate = await dateLabel.textContent();
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterDate = await dateLabel.textContent();
     expect(afterDate).not.toBe(beforeDate);
 
     await page.getByRole('button', { name: 'Previous', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const restoredDate = await dateLabel.textContent();
     expect(restoredDate).toBe(beforeDate);
   });
@@ -123,9 +123,9 @@ test.describe('Calendar — full regression', () => {
     const todayDate = await dateLabel.textContent();
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const awayDate = await dateLabel.textContent();
     expect(awayDate).not.toBe(todayDate);
@@ -139,10 +139,10 @@ test.describe('Calendar — full regression', () => {
       await todayLink.click();
     } else {
       await page.getByRole('button', { name: 'Previous', exact: true }).click();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       await page.getByRole('button', { name: 'Previous', exact: true }).click();
     }
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const restoredDate = await dateLabel.textContent();
     expect(restoredDate).toBe(todayDate);
@@ -151,7 +151,7 @@ test.describe('Calendar — full regression', () => {
   // C7 — switch to Week view
   test('switch to Week view and verify', async ({ page }) => {
     await page.getByRole('button', { name: 'Week', exact: true }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/SUN|MON|TUE|WED|THU|FRI|SAT/i);
@@ -168,7 +168,7 @@ test.describe('Calendar — full regression', () => {
     ).catch(() => false);
     if (!isWeekActive) {
       await weekBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const dateRange = page.getByText(/\d+(?:\s+\w+)?\s*-\s*\d+\s+\w+,?\s*\d{4}/).first();
@@ -176,14 +176,14 @@ test.describe('Calendar — full regression', () => {
     const beforeRange = await dateRange.textContent();
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterText = await page.locator('body').innerText();
     const newRange = afterText.match(/(\d+(?:\s+\w+)?\s*-\s*\d+\s+\w+,?\s*\d{4})/);
     expect(newRange).toBeTruthy();
     expect(newRange[1]).not.toBe(beforeRange);
 
     await page.getByRole('button', { name: 'Previous', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const restoredText = await page.locator('body').innerText();
     const restoredRange = restoredText.match(/(\d+(?:\s+\w+)?\s*-\s*\d+\s+\w+,?\s*\d{4})/);
     expect(restoredRange).toBeTruthy();
@@ -193,7 +193,7 @@ test.describe('Calendar — full regression', () => {
   // C9 — switch to Month view
   test('switch to Month view and verify', async ({ page }) => {
     await page.getByRole('button', { name: 'Month', exact: true }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/SUN|MON|TUE|WED|THU|FRI|SAT/i);
@@ -210,7 +210,7 @@ test.describe('Calendar — full regression', () => {
     const bodyBefore = await page.locator('body').innerText();
     if (!bodyBefore.match(/SUN.*MON.*TUE|MON.*TUE.*WED/i)) {
       await monthBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const monthHeader = page.getByText(/\w+,?\s+\d{4}/).first();
@@ -218,12 +218,12 @@ test.describe('Calendar — full regression', () => {
     const beforeMonth = await monthHeader.textContent();
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterMonth = await monthHeader.textContent();
     expect(afterMonth).not.toBe(beforeMonth);
 
     await page.getByRole('button', { name: 'Previous', exact: true }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const restoredMonth = await monthHeader.textContent();
     expect(restoredMonth).toBe(beforeMonth);
   });
@@ -231,7 +231,7 @@ test.describe('Calendar — full regression', () => {
   // C11 — return to Day view from Month
   test('return to Day view from Month', async ({ page }) => {
     await page.getByRole('button', { name: 'Day', exact: true }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const dateLabel = page.getByText(/\d{1,2}\s+\w+,\s+\d{4},\s+\w+/).first();
     await expect(dateLabel).toBeVisible({ timeout: 10_000 });
@@ -242,7 +242,7 @@ test.describe('Calendar — full regression', () => {
 
   // C12 — scroll day timeline
   test('scroll day timeline up and down', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const scrolled = await page.evaluate(() => {
       const scrollables = document.querySelectorAll(
@@ -258,7 +258,7 @@ test.describe('Calendar — full regression', () => {
       return true;
     });
     expect(scrolled).toBe(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await page.evaluate(() => {
       const scrollables = document.querySelectorAll(
@@ -272,7 +272,7 @@ test.describe('Calendar — full regression', () => {
       }
       window.scrollTo(0, 0);
     });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // C13 — exit full calendar navigates away (LAST)
@@ -287,7 +287,7 @@ test.describe('Calendar — full regression', () => {
     } else {
       test.skip(true, 'no exit button found');
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     expect(page.url()).not.toContain('/ea/calendar');
   });

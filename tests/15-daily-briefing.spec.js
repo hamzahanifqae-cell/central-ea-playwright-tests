@@ -12,7 +12,7 @@ test.describe('Daily Briefing', () => {
       document.body.style.pointerEvents = '';
     }).catch(() => {});
     await db.goto();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ╔═══════════════════════════════════════════════════╗
@@ -97,7 +97,7 @@ test.describe('Daily Briefing', () => {
     test.setTimeout(60_000);
 
     await db.scrollToBottom();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     await db.scrollToTop();
     await expect(db.heading).toBeVisible({ timeout: 5_000 });
   });
@@ -113,7 +113,7 @@ test.describe('Daily Briefing', () => {
     if (await searchInput.count() > 0) {
       await searchInput.click();
       await searchInput.pressSequentially('topic', { delay: 30 });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       await searchInput.clear();
     }
   });
@@ -125,12 +125,12 @@ test.describe('Daily Briefing', () => {
     if (await toggle.count() > 0) {
       const originalState = await toggle.getAttribute('aria-checked');
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       const afterToggle = await toggle.getAttribute('aria-checked');
       expect(afterToggle).not.toBe(originalState);
 
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       const restored = await toggle.getAttribute('aria-checked');
       expect(restored).toBe(originalState);
     }
@@ -145,7 +145,7 @@ test.describe('Daily Briefing', () => {
     if (count > 0) {
       const firstCheckbox = checkboxes.first();
       await firstCheckbox.click().catch(() => {});
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -155,12 +155,12 @@ test.describe('Daily Briefing', () => {
     const frequencySelect = db.frequencySelect;
     if (await frequencySelect.count() > 0) {
       await frequencySelect.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
 
       const option = page.locator('[role="option"]').first();
       if (await option.count() > 0) {
         await option.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -172,7 +172,7 @@ test.describe('Daily Briefing', () => {
     if (await timeInput.count() > 0) {
       await timeInput.click();
       await timeInput.fill('09:00');
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       await timeInput.clear();
     }
   });
@@ -183,7 +183,7 @@ test.describe('Daily Briefing', () => {
     const saveBtn = db.saveBtn;
     if (await saveBtn.count() > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await db.successMsg.isVisible({ timeout: 5_000 }).catch(() => {});
     }
   });
@@ -194,12 +194,12 @@ test.describe('Daily Briefing', () => {
     const resetBtn = db.resetBtn;
     if (await resetBtn.count() > 0) {
       await resetBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const confirmBtn = page.getByRole('button', { name: /Confirm|Yes|Reset/i }).first();
       if (await confirmBtn.count() > 0) {
         await confirmBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -210,7 +210,7 @@ test.describe('Daily Briefing', () => {
     const previewBtn = db.previewBtn;
     if (await previewBtn.count() > 0) {
       await previewBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       const modal = db.modal;
       if (await modal.count() > 0) {
@@ -229,7 +229,7 @@ test.describe('Daily Briefing', () => {
     if (tabCount > 1) {
       const secondTab = tabs.nth(1);
       await secondTab.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -253,13 +253,13 @@ test.describe('Daily Briefing', () => {
     if (await searchInput.count() > 0) {
       await searchInput.click();
       await searchInput.pressSequentially('news', { delay: 30 });
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await searchInput.clear();
     }
 
     if (await filterBtn.count() > 0) {
       await filterBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -270,12 +270,12 @@ test.describe('Daily Briefing', () => {
     if (await searchInput.count() > 0) {
       await searchInput.click();
       await searchInput.fill('test');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
 
       const clearBtn = db.clearSearchBtn;
       if (await clearBtn.count() > 0) {
         await clearBtn.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       } else {
         await searchInput.clear();
       }
@@ -288,7 +288,7 @@ test.describe('Daily Briefing', () => {
     const refreshBtn = db.refreshBtn;
     if (await refreshBtn.count() > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -298,7 +298,7 @@ test.describe('Daily Briefing', () => {
     const settingsBtn = db.settingsBtn;
     if (await settingsBtn.count() > 0) {
       await settingsBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const modal = db.modal;
       if (await modal.count() > 0) {
@@ -316,12 +316,12 @@ test.describe('Daily Briefing', () => {
     const sortBtn = db.sortBtn;
     if (await sortBtn.count() > 0) {
       await sortBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const option = page.locator('[role="option"]').first();
       if (await option.count() > 0) {
         await option.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -332,12 +332,12 @@ test.describe('Daily Briefing', () => {
     const deleteBtn = db.deleteBtn;
     if (await deleteBtn.count() > 0) {
       await deleteBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const confirmBtn = page.getByRole('button', { name: /Confirm|Yes|Delete/i }).first();
       if (await confirmBtn.count() > 0) {
         await confirmBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -350,7 +350,7 @@ test.describe('Daily Briefing', () => {
       const checkboxes = page.locator('input[type="checkbox"]');
       if (await checkboxes.count() > 0) {
         await checkboxes.first().click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -359,24 +359,24 @@ test.describe('Daily Briefing', () => {
     test.setTimeout(120_000);
 
     await expect(db.heading).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const toggle = page.getByRole('switch').first();
     if (await toggle.count() > 0) {
       await toggle.click().catch(() => {});
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const filterBtn = db.filterBtn;
     if (await filterBtn.count() > 0) {
       await filterBtn.click().catch(() => {});
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const saveBtn = db.saveBtn;
     if (await saveBtn.count() > 0) {
       await saveBtn.click().catch(() => {});
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 });

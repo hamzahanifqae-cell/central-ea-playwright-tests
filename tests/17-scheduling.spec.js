@@ -106,7 +106,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       await expect(sp.bookingDetailsHeading).toBeVisible({ timeout: 5_000 }).catch(() => {});
     }
   });
@@ -147,13 +147,13 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const searchTerm = 'meeting';
     await sp.searchBookingsInput.click();
     await sp.searchBookingsInput.pressSequentially(searchTerm, { delay: 30 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const mainText = await page.locator('main').textContent();
     expect(mainText).toBeTruthy();
 
     await sp.searchBookingsInput.clear();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('SC11 — filter bookings by type', async ({ page }) => {
@@ -166,12 +166,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     }
 
     await sp.bookingTypesFilter.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const firstOption = page.locator('[role="option"]').first();
     if (await firstOption.count() > 0) {
       await firstOption.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const filterValue = await sp.bookingTypesFilter.textContent();
@@ -197,14 +197,14 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(sp.bookingDetailsHeading).toBeVisible({ timeout: 5_000 }).catch(() => {});
       await expect(sp.attendeesList).toBeVisible({ timeout: 3_000 }).catch(() => {});
 
       if (await sp.bookingDetailsClose.count() > 0) {
         await sp.bookingDetailsClose.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -214,9 +214,9 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     await sp.gotoDashboard();
 
     await sp.scrollToBottom();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await sp.scrollToTop();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(sp.calendarView).toBeVisible({ timeout: 5_000 });
   });
@@ -225,20 +225,20 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     test.setTimeout(120_000);
     await sp.gotoDashboard();
     await expect(sp.dashboardHeading).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(sp.calendarView).toBeVisible({ timeout: 8_000 });
     await expect(sp.upcomingBookingsSection).toBeVisible({ timeout: 8_000 });
 
     await sp.gotoBookings();
     await expect(sp.bookingsPageHeading).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = sp.searchBookingsInput;
     if (await searchInput.count() > 0) {
       await searchInput.click();
       await searchInput.pressSequentially('test', { delay: 30 });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       await searchInput.clear();
     }
 
@@ -257,12 +257,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const rescheduleBtn = sp.rescheduleBtn;
       if (await rescheduleBtn.count() > 0) {
         await rescheduleBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         expect(page.url()).toContain('reschedule').catch(() => {});
       }
 
@@ -277,14 +277,14 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const deleteBtn = sp.deleteBookingBtn;
       if (await deleteBtn.count() > 0) {
         await deleteBtn.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
         await sp.confirmBtn.click().catch(() => {});
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       }
 
       await sp.bookingDetailsClose.click().catch(() => {});
@@ -300,7 +300,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
       await dateFilter.click();
       const today = new Date().toISOString().split('T')[0];
       await dateFilter.fill(today);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await dateFilter.clear();
     }
   });
@@ -312,12 +312,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const statusFilter = sp.statusFilter;
     if (await statusFilter.count() > 0) {
       await statusFilter.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
 
       const firstOption = page.locator('[role="option"]').first();
       if (await firstOption.count() > 0) {
         await firstOption.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -327,14 +327,14 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     await sp.gotoBookings();
 
     await sp.bookingTypesFilter.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     await page.locator('[role="option"]').first().click().catch(() => {});
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const clearBtn = sp.clearFiltersBtn;
     if (await clearBtn.count() > 0) {
       await clearBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -348,7 +348,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
       const isEnabled = await nextBtn.isEnabled();
       if (isEnabled) {
         await nextBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         expect(page.url()).toBeTruthy();
       }
     }
@@ -361,7 +361,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const exportBtn = sp.exportBtn;
     if (await exportBtn.count() > 0) {
       await exportBtn.click();
-      await page.waitForTimeout(2500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -372,7 +372,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const linkBtn = sp.meetingLinkBtn;
       if (await linkBtn.count() > 0) {
@@ -391,12 +391,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const reminderBtn = sp.sendReminderBtn;
       if (await reminderBtn.count() > 0) {
         await reminderBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         await sp.successMsg.isVisible().catch(() => {});
       }
 
@@ -411,7 +411,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const eventTypesTab = sp.eventTypesTab;
     if (await eventTypesTab.count() > 0) {
       await eventTypesTab.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       expect(page.url()).toContain('scheduler').or(page.url().toContain('event')).catch(() => {});
     }
   });
@@ -423,7 +423,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const createBtn = sp.createEventBtn;
     if (await createBtn.count() > 0) {
       await createBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       expect(page.url()).toContain('create').or(page.url().toContain('new')).catch(() => {});
     }
   });
@@ -435,7 +435,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const availTab = sp.availabilityTab;
     if (await availTab.count() > 0) {
       await availTab.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await expect(availTab).toHaveAttribute('aria-selected', 'true').catch(() => {});
     }
   });
@@ -447,12 +447,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const copyBtn = sp.copyLinkBtn;
       if (await copyBtn.count() > 0) {
         await copyBtn.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
       }
 
       await sp.bookingDetailsClose.click().catch(() => {});
@@ -466,7 +466,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const bookingCount = await sp.bookingRows.count();
     if (bookingCount > 0) {
       await sp.bookingRows.first().click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       const attendeesSection = sp.attendeesList;
       if (await attendeesSection.count() > 0) {
@@ -484,7 +484,7 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     const columnHeader = page.locator('th, [role="columnheader"]').first();
     if (await columnHeader.count() > 0) {
       await columnHeader.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 });

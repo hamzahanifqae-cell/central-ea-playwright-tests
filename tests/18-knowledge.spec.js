@@ -12,7 +12,7 @@ test.describe('Knowledge Base', () => {
       document.body.style.pointerEvents = '';
     }).catch(() => {});
     await kb.goto();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -46,18 +46,18 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.urlTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.urlInput).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Scan all pages')).toBeVisible();
     await expect(kb.importBtn).toBeDisabled();
 
     await kb.urlInput.fill('https://example.com/zztest-knowledge');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(kb.importBtn).toBeEnabled({ timeout: 3000 });
 
     await kb.urlInput.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(kb.importBtn).toBeDisabled();
   });
 
@@ -65,21 +65,21 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.urlTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await kb.urlInput.fill('https://example.com/zztest-knowledge-base');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(kb.importBtn).toBeEnabled({ timeout: 3000 });
 
     await kb.importBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const reImportBtn = page.getByRole('button', { name: 'Re-import' });
     if (await reImportBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     const urlSection = kb.urlImportsSection;
     await urlSection.scrollIntoViewIfNeeded({ timeout: 10_000 });
@@ -93,7 +93,7 @@ test.describe('Knowledge Base', () => {
     const urlSection = kb.urlImportsSection;
     await urlSection.scrollIntoViewIfNeeded();
     await urlSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify zztest entry visible
     const zzEntry = page.getByText(/zztest-knowledge/i).first();
@@ -104,16 +104,16 @@ test.describe('Knowledge Base', () => {
     const toggle = page.getByLabel(/Toggle .* active/).first();
     if (await toggle.isVisible().catch(() => false)) {
       await toggle.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // View content
     const viewBtn = kb.viewContentBtns().first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
 
       // Dismiss the content drawer
       const drawerCancel = page.getByRole('button', { name: 'Cancel' });
@@ -122,7 +122,7 @@ test.describe('Knowledge Base', () => {
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Clear any lingering overlay
       await page.evaluate(() => {
@@ -130,12 +130,12 @@ test.describe('Knowledge Base', () => {
         document.body.style.pointerEvents = '';
         document.querySelectorAll('.fixed.inset-0').forEach(el => el.remove());
       }).catch(() => {});
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Collapse
     await urlSection.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -145,7 +145,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.textTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.textArea).toBeVisible({ timeout: 5000 });
     await expect(kb.addTextBtn).toBeVisible();
@@ -153,7 +153,7 @@ test.describe('Knowledge Base', () => {
     await expect(page.getByText('0 / 17,500')).toBeVisible();
 
     await kb.textArea.fill('ZZTEST knowledge text entry for automated testing');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     const counter = page.getByText(/\d+ \/ 17,500/);
     await expect(counter).toBeVisible();
   });
@@ -162,19 +162,19 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.textTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const ts = Date.now();
     await kb.textArea.fill(`ZZTEST automated text import ${ts}: This is test knowledge content created by the automated regression suite.`);
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     await kb.addTextBtn.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     const reImportBtn = page.getByRole('button', { name: /Re-import|Overwrite|Replace/i });
     if (await reImportBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
 
     const textSection = kb.textImportsSection;
@@ -189,7 +189,7 @@ test.describe('Knowledge Base', () => {
     const textSection = kb.textImportsSection;
     await textSection.scrollIntoViewIfNeeded();
     await textSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify ZZTEST entry
     const zzEntry = page.getByText(/ZZTEST/i).first();
@@ -200,16 +200,16 @@ test.describe('Knowledge Base', () => {
     const toggle = page.getByLabel(/Toggle .* active/).first();
     if (await toggle.isVisible().catch(() => false)) {
       await toggle.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // View content
     const viewBtn = kb.viewContentBtns().first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
 
       // Dismiss the content drawer
       const drawerCancel = page.getByRole('button', { name: 'Cancel' });
@@ -218,7 +218,7 @@ test.describe('Knowledge Base', () => {
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Clear any lingering overlay
       await page.evaluate(() => {
@@ -226,12 +226,12 @@ test.describe('Knowledge Base', () => {
         document.body.style.pointerEvents = '';
         document.querySelectorAll('.fixed.inset-0').forEach(el => el.remove());
       }).catch(() => {});
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Collapse
     await textSection.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -241,7 +241,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.faqTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.faqQuestionInput).toBeVisible({ timeout: 5000 });
     await expect(kb.faqAnswerInput).toBeVisible();
@@ -251,7 +251,7 @@ test.describe('Knowledge Base', () => {
 
     await kb.faqQuestionInput.fill('ZZTEST: What is this FAQ for?');
     await kb.faqAnswerInput.fill('ZZTEST: This FAQ was created by the automated test suite.');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     const qVal = await kb.faqQuestionInput.inputValue();
     expect(qVal).toBe('ZZTEST: What is this FAQ for?');
   });
@@ -260,20 +260,20 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.faqTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const ts = Date.now();
     await kb.faqQuestionInput.fill(`ZZTEST: What is automated testing ${ts}?`);
     await kb.faqAnswerInput.fill('ZZTEST: Automated testing uses scripts to verify software behavior.');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     await kb.addEntryBtn.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     const reImportBtn = page.getByRole('button', { name: /Re-import|Overwrite|Replace/i });
     if (await reImportBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
 
     const faqsSection = kb.faqsSection;
@@ -288,7 +288,7 @@ test.describe('Knowledge Base', () => {
     const faqSection = kb.faqsSection;
     await faqSection.scrollIntoViewIfNeeded();
     await faqSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const zzEntry = page.getByText(/ZZTEST/i).first();
     const entryVisible = await zzEntry.isVisible().catch(() => false);
@@ -298,14 +298,14 @@ test.describe('Knowledge Base', () => {
     const toggle = page.getByLabel(/Toggle .* active/).first();
     if (await toggle.isVisible().catch(() => false)) {
       await toggle.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Collapse
     await faqSection.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -315,7 +315,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.fileTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.fileDropzone).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/TXT, MD, PDF, DOC, DOCX/)).toBeVisible();
@@ -329,7 +329,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.centralDocsTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const centralDocsBtn = kb.centralDocsSection;
     await centralDocsBtn.scrollIntoViewIfNeeded();
@@ -340,7 +340,7 @@ test.describe('Knowledge Base', () => {
     const count = match ? parseInt(match[1]) : 0;
 
     await centralDocsBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     if (count > 0) {
       await expect(kb.syncAllBtn).toBeVisible({ timeout: 5000 });
@@ -348,12 +348,12 @@ test.describe('Knowledge Base', () => {
       expect(toggles).toBeGreaterThan(0);
 
       await kb.syncAllBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
 
     // Collapse
     await centralDocsBtn.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -363,7 +363,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.videoTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.videoUrlInput).toBeVisible({ timeout: 5000 });
     await expect(kb.addVideoBtn).toBeVisible();
@@ -372,7 +372,7 @@ test.describe('Knowledge Base', () => {
     await expect(page.getByText(/MP4, WebM, MOV/)).toBeVisible();
 
     await kb.videoUrlInput.fill('https://www.youtube.com/watch?v=zztest123');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     const val = await kb.videoUrlInput.inputValue();
     expect(val).toBe('https://www.youtube.com/watch?v=zztest123');
     await kb.videoUrlInput.fill('');
@@ -385,7 +385,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.memoriesTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.memoriesImportTab).toBeVisible({ timeout: 5000 });
     await expect(kb.memoriesCreateTab).toBeVisible();
@@ -399,19 +399,19 @@ test.describe('Knowledge Base', () => {
 
     // Paste dummy response and cancel (don't actually import)
     await kb.memoriesPasteArea.fill('```\n# Instructions\n[2026-01-01] - ZZTEST memory import entry\n```');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await kb.memoriesCancelBtn.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('K14 — Memories Create tab shows textarea and add memory button', async ({ page }) => {
     test.setTimeout(60_000);
 
     await kb.memoriesTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await kb.memoriesCreateTab.click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('Add a memory')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Memories are scoped to this workspace')).toBeVisible();
@@ -420,11 +420,11 @@ test.describe('Knowledge Base', () => {
     await expect(kb.addMemoryBtn).toBeDisabled();
 
     await kb.memoriesTextarea.fill('ZZTEST automated memory entry');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(kb.addMemoryBtn).toBeEnabled({ timeout: 3000 });
 
     await kb.memoriesTextarea.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(kb.addMemoryBtn).toBeDisabled();
   });
 
@@ -432,18 +432,18 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.memoriesTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await kb.memoriesCreateTab.click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const ts = Date.now();
     await kb.memoriesTextarea.fill(`ZZTEST memory ${ts}: automated test entry`);
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.addMemoryBtn).toBeEnabled({ timeout: 3000 });
     await kb.addMemoryBtn.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Verify — textarea cleared or success
     const textareaVal = await kb.memoriesTextarea.inputValue().catch(() => '');
@@ -456,7 +456,7 @@ test.describe('Knowledge Base', () => {
 
     // Search to narrow results (164 memories total)
     await kb.searchInput.fill('ZZTEST memory');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     const memSection = kb.memoriesSection;
     const memVisible = await memSection.isVisible().catch(() => false);
@@ -464,7 +464,7 @@ test.describe('Knowledge Base', () => {
 
     await memSection.scrollIntoViewIfNeeded();
     await memSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const zzEntry = page.getByText(/ZZTEST memory/i).first();
     const entryVisible = await zzEntry.isVisible().catch(() => false);
@@ -474,16 +474,16 @@ test.describe('Knowledge Base', () => {
     const toggle = page.getByLabel(/Toggle .* active/).first();
     if (await toggle.isVisible().catch(() => false)) {
       await toggle.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Collapse and clear search
     await memSection.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await kb.searchInput.fill('');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -493,7 +493,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.ticketsTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(kb.goToTicketsBtn).toBeVisible({ timeout: 5000 });
 
@@ -509,7 +509,7 @@ test.describe('Knowledge Base', () => {
 
       if (count > 0) {
         await ticketsBtn.click();
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
         await expect(kb.ticketsSwitch).toBeVisible({ timeout: 5000 });
       }
     }
@@ -522,7 +522,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(60_000);
 
     await kb.notionTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const importAgain = await kb.importAgainBtn.isVisible().catch(() => false);
     const importFromNotion = await page.getByRole('button', { name: 'Import from Notion' }).isVisible().catch(() => false);
@@ -545,13 +545,13 @@ test.describe('Knowledge Base', () => {
 
     await expect(kb.searchInput).toBeVisible({ timeout: 5000 });
     await kb.searchInput.fill('Project Plan');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     const val = await kb.searchInput.inputValue();
     expect(val).toBe('Project Plan');
 
     await kb.searchInput.fill('');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('K20 — Suggestions button opens suggestions panel', async ({ page }) => {
@@ -564,11 +564,11 @@ test.describe('Knowledge Base', () => {
     expect(sugText).toMatch(/Suggestions/);
 
     await kb.suggestionsBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const discardCount = await kb.discardBtns.count();
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -580,7 +580,7 @@ test.describe('Knowledge Base', () => {
     const urlSection = kb.urlImportsSection;
     await urlSection.scrollIntoViewIfNeeded();
     await urlSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     let deleted = 0;
     for (let i = 0; i < 5; i++) {
@@ -590,11 +590,11 @@ test.describe('Knowledge Base', () => {
       const deleteBtn = kb.deleteSourceBtns().first();
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.click();
-          await page.waitForTimeout(2000);
+          await page.waitForLoadState('domcontentloaded');
         }
         deleted++;
       } else break;
@@ -607,7 +607,7 @@ test.describe('Knowledge Base', () => {
     const textSection = kb.textImportsSection;
     await textSection.scrollIntoViewIfNeeded();
     await textSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     let deleted = 0;
     for (let i = 0; i < 5; i++) {
@@ -617,11 +617,11 @@ test.describe('Knowledge Base', () => {
       const deleteBtn = kb.deleteSourceBtns().first();
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.click();
-          await page.waitForTimeout(2000);
+          await page.waitForLoadState('domcontentloaded');
         }
         deleted++;
       } else break;
@@ -634,7 +634,7 @@ test.describe('Knowledge Base', () => {
     const faqSection = kb.faqsSection;
     await faqSection.scrollIntoViewIfNeeded();
     await faqSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     let deleted = 0;
     for (let i = 0; i < 5; i++) {
@@ -644,11 +644,11 @@ test.describe('Knowledge Base', () => {
       const deleteBtn = kb.deleteSourceBtns().first();
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.click();
-          await page.waitForTimeout(2000);
+          await page.waitForLoadState('domcontentloaded');
         }
         deleted++;
       } else break;
@@ -659,7 +659,7 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.searchInput.fill('ZZTEST memory');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     const memSection = kb.memoriesSection;
     const memVisible = await memSection.isVisible().catch(() => false);
@@ -670,7 +670,7 @@ test.describe('Knowledge Base', () => {
 
     await memSection.scrollIntoViewIfNeeded();
     await memSection.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     let deleted = 0;
     for (let i = 0; i < 5; i++) {
@@ -680,17 +680,17 @@ test.describe('Knowledge Base', () => {
       const deleteBtn = kb.deleteSourceBtns().first();
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.click();
-          await page.waitForTimeout(2000);
+          await page.waitForLoadState('domcontentloaded');
         }
         deleted++;
       } else break;
     }
 
     await kb.searchInput.fill('');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 });

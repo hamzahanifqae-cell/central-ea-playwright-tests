@@ -24,11 +24,11 @@ test.describe('Automations — full regression', () => {
     const beforeCount = await ac.automationRows.count();
     await ac.automationSearch.click();
     await ac.automationSearch.pressSequentially('zzznonexistent', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterCount = await ac.automationRows.count();
     expect(afterCount).toBeLessThan(beforeCount);
     await ac.automationSearch.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // W3 — row controls
@@ -52,7 +52,7 @@ test.describe('Automations — full regression', () => {
   test('edit panel opens and closes', async ({ page }) => {
     await expect(ac.editButtons.first()).toBeVisible({ timeout: 15_000 });
     await ac.editButtons.first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const panelVisible = await page.locator(
       '[data-state="open"], [role="dialog"], textarea, [data-slot="drawer-content"]'
@@ -65,14 +65,14 @@ test.describe('Automations — full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // W6 — pause and resume an automation
   test('pause and resume automation', async ({ page }) => {
     await expect(ac.pauseButtons.first()).toBeVisible({ timeout: 15_000 });
     await ac.pauseButtons.first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // After pausing, the button might change to "Resume automation" or "Play automation"
     const resumeBtn = page.getByRole('button', { name: /resume|play|start/i }).first();
@@ -80,7 +80,7 @@ test.describe('Automations — full regression', () => {
 
     if (resumeVisible) {
       await resumeBtn.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       // Verify it went back to pause state
       await expect(ac.pauseButtons.first()).toBeVisible({ timeout: 10_000 });
     }
@@ -92,11 +92,11 @@ test.describe('Automations — full regression', () => {
     // W6 navigated to automation detail (URL still has /workflows) — force full nav
     await ac.goto('Automations');
     await ac.browseTemplatesTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/template|automation|enable/i);
     // Go back to My Automations
     await ac.myAutomationsTab.click();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 });

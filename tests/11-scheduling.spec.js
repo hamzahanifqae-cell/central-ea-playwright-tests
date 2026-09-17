@@ -23,14 +23,14 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
     // Navigate to Inbox first (use goto for reliable direct navigation)
     await ac.goto('Inbox');
     await page.getByLabel('Compose new email').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Switch to Google account (needed for email features)
     const compose = page.getByLabel('Compose new email');
     const box = await compose.boundingBox();
     if (box) {
       await page.mouse.click(box.x + box.width + 20, box.y + box.height / 2);
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
       await page.evaluate(() => {
         const els = document.querySelectorAll('div, span, button, a');
         for (const el of els) {
@@ -44,37 +44,37 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
           }
         }
       });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Compose new email
     await page.getByLabel('Compose new email').click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Fill To field
     const toField = page.getByPlaceholder(/recipients|to/i).first();
     await expect(toField).toBeVisible({ timeout: 5000 });
     await toField.click();
     await toField.pressSequentially('hamzahanifsqae@gmail.com', { delay: 30 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill Subject
     const subjectField = page.getByPlaceholder(/subject/i).first();
     await expect(subjectField).toBeVisible({ timeout: 5000 });
     await subjectField.click();
     await subjectField.fill('ZZTEST scheduled email');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill Body
     const bodyEditor = page.locator('[contenteditable="true"]').first();
     await expect(bodyEditor).toBeVisible({ timeout: 5000 });
     await bodyEditor.click();
     await page.keyboard.type('ZZTEST scheduled email body', { delay: 15 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Click the chevron (dropdown arrow) next to Send button to open schedule modal
     await page.evaluate(() => {
@@ -96,7 +96,7 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
         }
       }
     });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify schedule modal is open
     await expect(page.getByText('Schedule to send').first()).toBeVisible({ timeout: 8000 });
@@ -105,7 +105,7 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
     const tomorrowPick = page.getByText('Tomorrow morning').first();
     await expect(tomorrowPick).toBeVisible({ timeout: 5000 });
     await tomorrowPick.click({ force: true });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify date input got populated
     const dateInput = page.locator('input[type="date"]').first();
@@ -116,14 +116,14 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
     const scheduleBtn = page.getByRole('button', { name: 'Schedule' });
     await expect(scheduleBtn).toBeVisible({ timeout: 5000 });
     await scheduleBtn.click({ force: true });
-    await page.waitForTimeout(8000);
+    await page.waitForLoadState('networkidle');
 
     // After Schedule click, compose window should close
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
     }).catch(() => {});
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Navigate to Scheduled folder — wait for emails to load
     await page.goto('/app/ea/email/scheduled', { waitUntil: 'domcontentloaded' });
@@ -136,7 +136,7 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
       await expect.poll(() => page.locator('body').innerText(), { timeout: 20_000 })
         .not.toMatch(/^\s*Central\s*$/);
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify ZZTEST scheduled email in the list
     await expect.poll(
@@ -161,11 +161,11 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
       const btn = document.querySelector('[aria-label="Cancel scheduled email"]');
       if (btn) btn.click();
     });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Reload Scheduled folder — wait for emails to load, then verify count decreased
     await page.goto('/app/ea/email/scheduled', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(10000);
+    await page.waitForLoadState('networkidle');
 
     const countAfter = await page.getByLabel('Cancel scheduled email').count();
     expect(countAfter).toBeLessThan(countBefore);

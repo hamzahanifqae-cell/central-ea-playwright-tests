@@ -57,7 +57,7 @@ test.describe('Inbox Assistant', () => {
     await ia.gotoCategorization();
     // Wait for categories to fully render
     await expect(ia.toggleToReply).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const editLinks = page.getByText('Edit', { exact: true });
     const editCount = await editLinks.count();
@@ -110,7 +110,7 @@ test.describe('Inbox Assistant', () => {
     test.setTimeout(60_000);
     await ia.gotoCategorization();
     await ia.scrollToBottom();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await ia.scrollToBottom();
 
     await expect(ia.classificationRulesHeading).toBeVisible({ timeout: 8000 });
@@ -141,7 +141,7 @@ test.describe('Inbox Assistant', () => {
     await ia.gotoCategorization();
 
     await ia.autoArchiveTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(ia.autoArchiveHeading).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Automatically archive emails when a category is applied')).toBeVisible({ timeout: 5000 });
@@ -151,7 +151,7 @@ test.describe('Inbox Assistant', () => {
     test.setTimeout(60_000);
     await ia.gotoCategorization();
     await ia.autoArchiveTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const archiveToggles = [
       ia.autoArchiveToReply,
@@ -177,11 +177,11 @@ test.describe('Inbox Assistant', () => {
     await expect(ia.customCategoriesHeading).toBeVisible({ timeout: 5000 });
 
     await ia.autoArchiveTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await expect(ia.autoArchiveHeading).toBeVisible({ timeout: 5000 });
 
     await ia.categoriesTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await expect(ia.customCategoriesHeading).toBeVisible({ timeout: 5000 });
   });
 
@@ -419,17 +419,17 @@ test.describe('Inbox Assistant', () => {
     await expect(ia.categorizationHeading).toBeVisible({ timeout: 10_000 });
 
     await ia.aiDraftsSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await ia.scrollToBottom();
     await ia.scrollToTop();
     await expect(ia.aiDraftsHeading).toBeVisible({ timeout: 10_000 });
 
     await ia.automationsSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await expect(ia.automationsHeading).toBeVisible({ timeout: 10_000 });
 
     await ia.categorizationSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await expect(ia.categorizationHeading).toBeVisible({ timeout: 10_000 });
   });
 
@@ -439,7 +439,7 @@ test.describe('Inbox Assistant', () => {
 
     await expect(ia.searchInput).toBeVisible({ timeout: 5000 });
     await ia.searchInput.fill('draft');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(ia.aiDraftsSidebarBtn).toBeVisible({ timeout: 5000 });
   });
@@ -458,13 +458,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle OFF
     await ia.toggleToReply.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.toggleToReply.getAttribute('aria-checked');
     expect(afterToggle).toBe('false');
 
     // Toggle back ON to restore state
     await ia.toggleToReply.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.toggleToReply.getAttribute('aria-checked');
     expect(restored).toBe('true');
   });
@@ -473,7 +473,7 @@ test.describe('Inbox Assistant', () => {
     test.setTimeout(60_000);
     await ia.gotoCategorization();
     await ia.scrollToBottom();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await ia.scrollToBottom();
 
     await expect(ia.classificationRulesTextarea).toBeVisible({ timeout: 8000 });
@@ -485,7 +485,7 @@ test.describe('Inbox Assistant', () => {
     const testText = ' TEST_RULE_' + Date.now();
     await ia.classificationRulesTextarea.click();
     await ia.classificationRulesTextarea.pressSequentially(testText, { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify text was added
     const updatedValue = await ia.classificationRulesTextarea.inputValue();
@@ -493,7 +493,7 @@ test.describe('Inbox Assistant', () => {
 
     // Clear test text by restoring to initial
     await ia.classificationRulesTextarea.fill(initialValue);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const restoredValue = await ia.classificationRulesTextarea.inputValue();
     expect(restoredValue).toBe(initialValue);
   });
@@ -511,14 +511,14 @@ test.describe('Inbox Assistant', () => {
     // Change to different option
     const newVal = originalVal === '1' ? '3' : '1';
     await ia.maxCategoriesSelect.selectOption(newVal);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const afterChange = await ia.maxCategoriesSelect.inputValue();
     expect(afterChange).toBe(newVal);
 
     // Restore original
     await ia.maxCategoriesSelect.selectOption(originalVal);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.maxCategoriesSelect.inputValue();
     expect(restored).toBe(originalVal);
   });
@@ -527,7 +527,7 @@ test.describe('Inbox Assistant', () => {
     test.setTimeout(60_000);
     await ia.gotoCategorization();
     await ia.autoArchiveTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(ia.autoArchiveToReply).toBeVisible({ timeout: 5000 });
 
@@ -535,13 +535,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle to opposite
     await ia.autoArchiveToReply.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.autoArchiveToReply.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Toggle back
     await ia.autoArchiveToReply.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.autoArchiveToReply.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -562,13 +562,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle
     await ia.autoRepliesSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.autoRepliesSwitch.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Restore
     await ia.autoRepliesSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.autoRepliesSwitch.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -587,14 +587,14 @@ test.describe('Inbox Assistant', () => {
     const testText = ' TEST_' + Date.now();
     await ia.instructionsTextarea.click();
     await ia.instructionsTextarea.pressSequentially(testText, { delay: 15 });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const updated = await ia.instructionsTextarea.inputValue();
     expect(updated).toContain(testText);
 
     // Restore
     await ia.instructionsTextarea.fill(initialValue);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.instructionsTextarea.inputValue();
     expect(restored).toBe(initialValue);
   });
@@ -612,11 +612,11 @@ test.describe('Inbox Assistant', () => {
     const testEmail = 'test' + Date.now() + '@block.com';
     await ia.bloclistInput.click();
     await ia.bloclistInput.pressSequentially(testEmail, { delay: 20 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Click Add button
     await ia.addBlocklistBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify email appears in list (as text on page)
     const emailInList = await page.getByText(testEmail).count();
@@ -624,7 +624,7 @@ test.describe('Inbox Assistant', () => {
 
     // Clear input for next operations
     await ia.bloclistInput.clear();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('IA37 — toggle Knowledge Base Context Source switch', async ({ page }) => {
@@ -639,13 +639,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle
     await ia.knowledgeBaseSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.knowledgeBaseSwitch.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Restore
     await ia.knowledgeBaseSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.knowledgeBaseSwitch.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -661,13 +661,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle
     await ia.draftCcSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.draftCcSwitch.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Restore
     await ia.draftCcSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.draftCcSwitch.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -686,13 +686,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle OFF
     await ia.autoCreateTasksSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.autoCreateTasksSwitch.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Toggle back ON
     await ia.autoCreateTasksSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.autoCreateTasksSwitch.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -708,14 +708,14 @@ test.describe('Inbox Assistant', () => {
 
     // Click "Sometimes"
     await ia.frequencySometimes.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const afterClick = await ia.frequencySometimes.getAttribute('aria-checked');
     expect(afterClick).toBe('true');
 
     // Restore the exact radio that was selected before the test.
     await originalRadio.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const restored = await page.getByRole('radio', { checked: true }).getAttribute('aria-label');
     expect(restored).toBe(originalChecked);
@@ -733,14 +733,14 @@ test.describe('Inbox Assistant', () => {
     const testText = 'TEST_' + Date.now();
     await ia.taskInstructionsInput.click();
     await ia.taskInstructionsInput.pressSequentially(testText, { delay: 20 });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const updated = await ia.taskInstructionsInput.inputValue();
     expect(updated).toContain(testText);
 
     // Restore
     await ia.taskInstructionsInput.fill(initialValue);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.taskInstructionsInput.inputValue();
     expect(restored).toBe(initialValue);
   });
@@ -755,13 +755,13 @@ test.describe('Inbox Assistant', () => {
 
     // Toggle
     await ia.addTasksToCalendarSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const afterToggle = await ia.addTasksToCalendarSwitch.getAttribute('aria-checked');
     expect(afterToggle).not.toBe(originalState);
 
     // Restore
     await ia.addTasksToCalendarSwitch.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const restored = await ia.addTasksToCalendarSwitch.getAttribute('aria-checked');
     expect(restored).toBe(originalState);
   });
@@ -775,13 +775,13 @@ test.describe('Inbox Assistant', () => {
     // Toggle a category
     const catStateBefore = await ia.toggleCalendar.getAttribute('aria-checked');
     await ia.toggleCalendar.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const catStateAfter = await ia.toggleCalendar.getAttribute('aria-checked');
     expect(catStateAfter).not.toBe(catStateBefore);
 
     // Navigate to AI Drafts
     await ia.aiDraftsSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await ia.scrollToBottom();
     await ia.scrollToTop();
     await expect(ia.aiDraftsHeading).toBeVisible({ timeout: 10_000 });
@@ -789,23 +789,23 @@ test.describe('Inbox Assistant', () => {
     // Toggle a switch there
     const autoReplyStateBefore = await ia.autoRepliesSwitch.getAttribute('aria-checked');
     await ia.autoRepliesSwitch.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const autoReplyStateAfter = await ia.autoRepliesSwitch.getAttribute('aria-checked');
     expect(autoReplyStateAfter).not.toBe(autoReplyStateBefore);
 
     // Navigate back to Categorization and verify change persisted
     await ia.categorizationSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await expect(ia.categorizationHeading).toBeVisible({ timeout: 10_000 });
     const catStateRestored = await ia.toggleCalendar.getAttribute('aria-checked');
     expect(catStateRestored).toBe(catStateAfter);
 
     // Restore all changes
     await ia.toggleCalendar.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await ia.aiDraftsSidebarBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await ia.autoRepliesSwitch.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
   });
 });

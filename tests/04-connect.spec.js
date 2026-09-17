@@ -24,13 +24,13 @@ test.describe('Connect — full regression', () => {
     for (const ch of channels) {
       const trigger = ac.accordionTrigger(ch);
       await trigger.click();
-      await page.waitForTimeout(800);
+      await page.waitForLoadState('domcontentloaded');
       // Verify content area appeared
       const content = page.locator('[data-slot="accordion-content"]');
       const anyVisible = await content.first().isVisible().catch(() => false);
       // Close it
       await trigger.click();
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -38,7 +38,7 @@ test.describe('Connect — full regression', () => {
   test('email account visible', async ({ page }) => {
     const emailTrigger = ac.accordionTrigger('Email');
     await emailTrigger.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     const hasEmail = /hamzahanifsqae/i.test(bodyText);
@@ -54,7 +54,7 @@ test.describe('Connect — full regression', () => {
     }
     // Close email accordion
     await emailTrigger.click();
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // K4 — each app status is readable

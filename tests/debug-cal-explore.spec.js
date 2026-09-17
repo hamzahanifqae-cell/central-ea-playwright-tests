@@ -5,9 +5,9 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const ac = new AskCentralPage(page);
   // Navigate to Your Day first, then click the Calendar sidebar link
   await ac.ensurePage('Your Day');
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState('networkidle');
   await page.locator('a[href="/app/ea/calendar"]').click();
-  await page.waitForTimeout(5000);
+  await page.waitForLoadState('networkidle');
 
   // Screenshot full page
   await page.screenshot({ path: 'debug-cal-full.png', fullPage: false });
@@ -49,7 +49,7 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const weekBtn = page.getByRole('button', { name: 'Week', exact: true });
   if (await weekBtn.isVisible().catch(() => false)) {
     await weekBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: 'debug-cal-week.png', fullPage: false });
   }
 
@@ -57,7 +57,7 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const monthBtn = page.getByRole('button', { name: 'Month', exact: true });
   if (await monthBtn.isVisible().catch(() => false)) {
     await monthBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: 'debug-cal-month.png', fullPage: false });
   }
 
@@ -65,7 +65,7 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const dayBtn = page.getByRole('button', { name: 'Day', exact: true });
   if (await dayBtn.isVisible().catch(() => false)) {
     await dayBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
   }
   
   // Try clicking on a calendar event
@@ -93,7 +93,7 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const eventEl = page.getByText('Daily Standup Update').first();
   if (await eventEl.isVisible().catch(() => false)) {
     await eventEl.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: 'debug-cal-event-click.png', fullPage: false });
 
     // Dump what appeared (modal/panel)
@@ -118,9 +118,9 @@ test('explore calendar page — dump all elements', async ({ page }) => {
   const prevBtn = page.getByRole('button', { name: 'Previous', exact: true });
   if (await prevBtn.isVisible().catch(() => false)) {
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await prevBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: 'debug-cal-prevday.png', fullPage: false });
   }
 });

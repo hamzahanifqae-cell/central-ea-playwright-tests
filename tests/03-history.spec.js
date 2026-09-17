@@ -23,11 +23,11 @@ test.describe('History — full regression', () => {
     const beforeCount = await ac.historyMenus.count();
     await ac.historySearch.click();
     await ac.historySearch.pressSequentially('zzznonexistent', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterCount = await ac.historyMenus.count();
     expect(afterCount).toBeLessThanOrEqual(beforeCount);
     await ac.historySearch.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // H3 — open conversation
@@ -40,7 +40,7 @@ test.describe('History — full regression', () => {
     } else {
       await firstMenuBtn.locator('xpath=..').click();
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     const url = page.url();
     const navigated = !url.endsWith('/history');
     if (!navigated) {
@@ -54,13 +54,13 @@ test.describe('History — full regression', () => {
     await ac.ensurePage('History');
     await expect(ac.historyMenus.first()).toBeVisible({ timeout: 15_000 });
     await ac.historyMenus.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const rename = page.getByText('Rename', { exact: true });
     const del = page.getByText('Delete', { exact: true });
     await expect(rename.first()).toBeVisible({ timeout: 5000 });
     await expect(del.first()).toBeVisible({ timeout: 5000 });
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // H5 — rename a conversation
@@ -78,14 +78,14 @@ test.describe('History — full regression', () => {
         break;
       } catch {
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
     if (!menuOpened) {
       test.skip(true, 'menu dropdown did not open after 3 attempts');
     }
     await rename.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // After clicking Rename, find whatever element got focus
     const focused = await page.evaluate(() => {
@@ -106,22 +106,22 @@ test.describe('History — full regression', () => {
       await page.keyboard.up('Control');
       await page.keyboard.type('ZZTEST-Renamed', { delay: 15 });
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       const bodyText = await page.locator('body').innerText();
       expect(bodyText).toContain('ZZTEST-Renamed');
 
       // Rename back to original
       await ac.historyMenus.first().click();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       await page.getByText('Rename', { exact: true }).first().click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       await page.keyboard.down('Control');
       await page.keyboard.press('a');
       await page.keyboard.up('Control');
       await page.keyboard.type(focused.value || 'Conversation', { delay: 15 });
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     } else {
       // Rename UI not detected — verify it at least didn't crash
       console.log('RENAME FOCUSED:', JSON.stringify(focused));
@@ -135,7 +135,7 @@ test.describe('History — full regression', () => {
     await ac.historySearch.click();
     await ac.historySearch.fill('');
     await ac.historySearch.pressSequentially('pong', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const menuCount = await ac.historyMenus.count();
     if (menuCount === 0) {
@@ -143,21 +143,21 @@ test.describe('History — full regression', () => {
     }
 
     await ac.historyMenus.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const del = page.getByText('Delete', { exact: true }).first();
     await del.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Confirm deletion if dialog appears
     const confirmBtn = page.getByRole('button', { name: /confirm|yes|delete/i }).first();
     if (await confirmBtn.isVisible().catch(() => false)) {
       await confirmBtn.click();
     }
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Clear search
     await ac.historySearch.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // H7 — New Chat button
@@ -165,7 +165,7 @@ test.describe('History — full regression', () => {
     const newChatBtn = page.locator('a:has-text("New Chat"), button:has-text("New Chat")').first();
     await expect(newChatBtn).toBeVisible();
     await newChatBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     expect(page.url()).toContain('/askcentral/new');
     await ac.ensurePage('History');
   });

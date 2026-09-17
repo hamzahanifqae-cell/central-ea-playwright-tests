@@ -39,7 +39,7 @@ test.describe('New Chat — full regression', () => {
 
   test('quota pill displays used and limit', async ({ page }) => {
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     const quota = await ac.executions();
     expect(quota).not.toBeNull();
     expect(quota.limit).toBeGreaterThan(0);
@@ -71,7 +71,7 @@ test.describe('New Chat — full regression', () => {
       test.skip(true, 'suggestion button not visible on current view');
     }
     await suggestion.click();
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
     const value = await ac.composer.inputValue();
     expect(value.length).toBeGreaterThan(0);
     await ac.composer.fill('');
@@ -84,7 +84,7 @@ test.describe('New Chat — full regression', () => {
     await expect(ac.dictateButton).toBeVisible();
     await expect(ac.dictateButton).toBeEnabled();
     await ac.dictateButton.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Dismiss any overlay, dialog, or recording UI that appeared
     const overlay = page.locator(
@@ -100,7 +100,7 @@ test.describe('New Chat — full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await expect(ac.composer).toBeVisible();
   });
 
@@ -108,40 +108,15 @@ test.describe('New Chat — full regression', () => {
     await expect(ac.voiceButton).toBeVisible();
     await expect(ac.voiceButton).toBeEnabled();
     await ac.voiceButton.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
-    // Voice mode opens a full-screen dialog with a gradient circle and mic/stop buttons
-    const dialog = page.locator('[role="dialog"][data-state="open"]').first();
-    const dialogVisible = await dialog.isVisible().catch(() => false);
-    expect(dialogVisible).toBe(true);
+    // Voice page opens with X close button (lucide-x SVG icon)
+    const closeBtn = page.locator('svg.lucide-x').first();
+    await expect(closeBtn).toBeVisible({ timeout: 10_000 });
 
-    // Close via X button at top-right of the dialog
-    const closeBtn = dialog.locator('button').filter({ has: page.locator('svg') }).last();
-    const xBtn = page.locator('[role="dialog"] button[aria-label*="lose"], [role="dialog"] button:has(svg.lucide-x)').first();
-    if (await xBtn.isVisible().catch(() => false)) {
-      await xBtn.click();
-    } else if (await closeBtn.isVisible().catch(() => false)) {
-      await closeBtn.click();
-    } else {
-      // Fallback: click the X button at the far top-right of the dialog
-      const allBtns = dialog.locator('button');
-      const btnCount = await allBtns.count();
-      for (let i = btnCount - 1; i >= 0; i--) {
-        const btn = allBtns.nth(i);
-        const box = await btn.boundingBox().catch(() => null);
-        if (box && box.x > 1300) {
-          await btn.click();
-          break;
-        }
-      }
-    }
-    await page.waitForTimeout(1500);
-
-    // If dialog is still open, force-close with Escape
-    if (await dialog.isVisible().catch(() => false)) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(1000);
-    }
+    // Click X button to close voice page
+    await closeBtn.click();
+    await page.waitForLoadState('domcontentloaded');
 
     await ac.ensurePage('New Chat');
     await expect(ac.composer.first()).toBeVisible();
@@ -151,16 +126,16 @@ test.describe('New Chat — full regression', () => {
 
   test('prompts panel opens and shows content', async ({ page }) => {
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/Saved Prompts|prompt|Create/i);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('create saved prompt with auto-run OFF and category selected', async ({ page }) => {
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const createLink = page.getByText(/Create your first prompt/i).first();
     const addBtn = page.getByRole('button', { name: /add|new prompt|\+/i }).first();
@@ -193,7 +168,7 @@ test.describe('New Chat — full regression', () => {
     const categorySelect = page.locator('#prompt-category');
     await expect(categorySelect).toBeVisible();
     await categorySelect.selectOption('General');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
     const selectedVal = await categorySelect.inputValue();
     expect(selectedVal).toBe('General');
 
@@ -202,7 +177,7 @@ test.describe('New Chat — full regression', () => {
     await expect(autoRunToggle).toBeVisible();
     if ((await autoRunToggle.getAttribute('aria-checked')) === 'true') {
       await autoRunToggle.click();
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
     }
     await expect(autoRunToggle).toHaveAttribute('aria-checked', 'false');
 
@@ -216,22 +191,22 @@ test.describe('New Chat — full regression', () => {
     const saveBtn = drawer.getByRole('button', { name: 'Save Prompt' });
     await expect(saveBtn).toBeVisible();
     await saveBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   test('created prompt appears in prompts panel', async ({ page }) => {
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toContain('ZZTEST-OFF');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('search filters prompts in panel', async ({ page }) => {
     // Always open the panel fresh
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Find the search input inside the prompts panel
     const searchInput = page.getByPlaceholder(/search prompt/i).first();
@@ -242,20 +217,20 @@ test.describe('New Chat — full regression', () => {
         await fallback.click();
         await fallback.fill('');
         await fallback.pressSequentially('ZZTEST-OFF', { delay: 20 });
-        await page.waitForTimeout(1500);
+        await page.waitForLoadState('domcontentloaded');
         const matchText = await page.locator('body').innerText();
         expect(matchText).toMatch(/ZZTEST-OFF/);
         await fallback.fill('');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('domcontentloaded');
         return;
       }
       // No search input: just verify our prompt is in panel text
       const bodyText = await page.locator('body').innerText();
       expect(bodyText).toMatch(/ZZTEST-OFF/);
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       return;
     }
 
@@ -263,31 +238,31 @@ test.describe('New Chat — full regression', () => {
     await searchInput.click();
     await searchInput.fill('');
     await searchInput.pressSequentially('ZZTEST-OFF', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const matchText = await page.locator('body').innerText();
     expect(matchText).toMatch(/ZZTEST-OFF/);
 
     // Search for non-existent prompt
     await searchInput.fill('');
     await searchInput.pressSequentially('xyznotfound999', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Clear and close
     await searchInput.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('clicking prompt with auto-run OFF fills composer without sending', async ({ page }) => {
     await ac.composer.fill('');
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const promptCard = page.getByText(/ZZTEST-OFF/).first();
     await expect(promptCard).toBeVisible();
     await promptCard.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Auto-run is OFF: should still be on New Chat, not sent
     expect(page.url()).toContain('/askcentral/new');
@@ -325,7 +300,7 @@ test.describe('New Chat — full regression', () => {
 
     // Attach and verify preview
     await ac.attachFile(sample);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     const previewText = await page.locator('body').innerText();
     expect(previewText).toMatch(/Widget A|sample\.txt|Electronics/i);
 
@@ -348,7 +323,7 @@ test.describe('New Chat — full regression', () => {
 
     // Open prompts panel and create prompt
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const addBtn = page.getByRole('button', { name: /add|new prompt|\+/i }).first();
     const createLink = page.getByText(/Create your first prompt/i).first();
@@ -379,7 +354,7 @@ test.describe('New Chat — full regression', () => {
     const categorySelect2 = page.locator('#prompt-category');
     await expect(categorySelect2).toBeVisible();
     await categorySelect2.selectOption('General');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('domcontentloaded');
 
     // Auto-run stays ON (verify the default)
     const autoRunToggle = drawer.getByRole('switch').first();
@@ -395,17 +370,17 @@ test.describe('New Chat — full regression', () => {
 
     // Save
     await drawer.getByRole('button', { name: 'Save Prompt' }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Go to New Chat and trigger the auto-run prompt
     await ac.ensurePage('New Chat');
     await ac.promptsButton.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const promptCard = page.getByText(new RegExp(title)).first();
     await expect(promptCard).toBeVisible({ timeout: 5000 });
     await promptCard.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Auto-run ON: the prompt auto-sends — wait for AI response
     await ac.waitForReply();
@@ -419,16 +394,16 @@ test.describe('New Chat — full regression', () => {
   // Helper: navigate to Customize > Saved Prompts and search ZZTEST
   async function goToSavedPromptsAndSearch(page, ac) {
     await ac.ensurePage('Customize');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const savedPromptsTab = page.getByRole('button', { name: 'Saved Prompts', exact: true });
     await expect(savedPromptsTab).toBeVisible();
     await savedPromptsTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const searchInput = page.getByPlaceholder(/search prompt/i).first();
     await expect(searchInput).toBeVisible();
     await searchInput.click();
     await searchInput.fill('ZZTEST');
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
   }
 
   // Helper: click the "..." button on first ZZTEST row using bounding box
@@ -459,7 +434,7 @@ test.describe('New Chat — full regression', () => {
     // ── ACTION 1: EDIT ──
     const clicked1 = await clickThreeDotMenu(page);
     expect(clicked1).toBe(true);
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify all three options are visible
     await expect(page.getByText('Edit', { exact: true }).first()).toBeVisible({ timeout: 5000 });
@@ -468,7 +443,7 @@ test.describe('New Chat — full regression', () => {
 
     // Click Edit
     await page.getByText('Edit', { exact: true }).first().click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify edit drawer opened with ZZTEST content
     const drawer = page.locator('[data-slot="sheet-content"]');
@@ -489,16 +464,16 @@ test.describe('New Chat — full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // ── ACTION 2: SHARE ──
     const clicked2 = await clickThreeDotMenu(page);
     expect(clicked2).toBe(true);
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('Share', { exact: true }).first()).toBeVisible({ timeout: 5000 });
     await page.getByText('Share', { exact: true }).first().click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify "Share Prompt" dialog opened
     const shareDialog = page.locator('[role="dialog"]').first();
@@ -517,23 +492,23 @@ test.describe('New Chat — full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // ── ACTION 3: DELETE ──
     const clicked3 = await clickThreeDotMenu(page);
     expect(clicked3).toBe(true);
-    await page.waitForTimeout(800);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('Delete', { exact: true }).first()).toBeVisible({ timeout: 5000 });
     await page.getByText('Delete', { exact: true }).first().click();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Confirm deletion dialog
     const confirmBtn = page.getByRole('button', { name: /delete/i }).last();
     if (await confirmBtn.isVisible().catch(() => false)) {
       await confirmBtn.click();
     }
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Reload and re-search to verify the specific prompt was deleted
     await goToSavedPromptsAndSearch(page, ac);

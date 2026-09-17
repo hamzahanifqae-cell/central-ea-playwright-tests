@@ -15,7 +15,7 @@ test.describe('Tasks Page', () => {
     // Wait for task list to render (skeleton → real rows)
     await page.getByText('Do it for me').first()
       .waitFor({ state: 'visible', timeout: 30_000 }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T0 — Navigate to Tasks page, verify it loads
@@ -41,7 +41,7 @@ test.describe('Tasks Page', () => {
 
     const allTasksBtn = page.locator('[role="button"]').filter({ hasText: 'All Tasks' }).first();
     await allTasksBtn.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Dropdown should show options (list items or menu items)
     const options = page.getByRole('option');
@@ -61,7 +61,7 @@ test.describe('Tasks Page', () => {
 
     // Close dropdown
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T2 — Filter by user avatar
@@ -75,21 +75,21 @@ test.describe('Tasks Page', () => {
     const filterYou = page.getByLabel('Filter by You');
     await expect(filterYou).toBeVisible({ timeout: 5000 });
     await filterYou.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // After filter, task list should still be visible (may have fewer/more tasks)
     const filteredCount = await page.getByText('Do it for me').count();
 
     // Click again to deselect filter
     await filterYou.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for tasks to reload after unfiltering (8000+ tasks = slow render)
     let reloaded = false;
     for (let i = 0; i < 6 && !reloaded; i++) {
       reloaded = await page.getByText('Do it for me').first().isVisible().catch(() => false)
         || await page.getByText(/tasks?\s*remaining/i).first().isVisible().catch(() => false);
-      if (!reloaded) await page.waitForTimeout(3000);
+      if (!reloaded) await page.waitForLoadState('networkidle');
     }
     expect(reloaded).toBe(true);
   });
@@ -101,7 +101,7 @@ test.describe('Tasks Page', () => {
     // Click the search icon on the tasks toolbar (second "Open search", not the calendar one)
     const searchBtns = page.getByLabel('Open search');
     await searchBtns.first().click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Search input should appear
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
@@ -109,7 +109,7 @@ test.describe('Tasks Page', () => {
 
     // Type a search term and verify input accepted it
     await searchInput.fill('meeting');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const inputValue = await searchInput.inputValue();
     expect(inputValue).toBe('meeting');
 
@@ -120,7 +120,7 @@ test.describe('Tasks Page', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T4 — Toggle List ↔ Board view
@@ -135,7 +135,7 @@ test.describe('Tasks Page', () => {
 
     // Click Board view
     await boardBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Board view should now be active — verify board-like layout appears
     // (columns, kanban-style elements)
@@ -146,7 +146,7 @@ test.describe('Tasks Page', () => {
 
     // Switch back to List view
     await listBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify task rows are back (list layout with "Do it for me" buttons)
     const doItBtns = page.getByText('Do it for me');
@@ -161,7 +161,7 @@ test.describe('Tasks Page', () => {
     const filterBtn = page.getByLabel('Filter emails');
     await expect(filterBtn).toBeVisible({ timeout: 5000 });
     await filterBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // A filter panel/dropdown should appear
     const filterPanel = await page.evaluate(() => {
@@ -172,7 +172,7 @@ test.describe('Tasks Page', () => {
 
     // Close filter
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T5b — Filter by Priority → Urgent, verify, then clear
@@ -183,25 +183,25 @@ test.describe('Tasks Page', () => {
     const filterBtn = page.getByLabel('Filter emails');
     await expect(filterBtn).toBeVisible({ timeout: 5000 });
     await filterBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Step 2: Select "Priority" from the filter type dropdown
     const priorityOpt = page.getByText('Priority', { exact: true }).first();
     await expect(priorityOpt).toBeVisible({ timeout: 5000 });
     await priorityOpt.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Step 3: Click "Select Priority" dropdown to open priority values
     const selectPriority = page.getByText('Select Priority');
     await expect(selectPriority).toBeVisible({ timeout: 5000 });
     await selectPriority.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Step 4: Click "Urgent" from the priority options dropdown (role="option")
     const urgentOption = page.getByRole('option', { name: 'Urgent' });
     await expect(urgentOption).toBeVisible({ timeout: 5000 });
     await urgentOption.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Step 5: Verify filter is applied
     // — "Clear All" button should be visible
@@ -213,7 +213,7 @@ test.describe('Tasks Page', () => {
 
     // Step 6: Clear the filter via "Clear All"
     await clearAllBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify filter is cleared — "Clear All" should disappear
     await expect(clearAllBtn).not.toBeVisible({ timeout: 5000 });
@@ -225,7 +225,7 @@ test.describe('Tasks Page', () => {
 
     // Click "+ Add Task"
     await page.getByLabel('Add new task').click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // A task creation form/modal/drawer should appear
     // Look for title input or "Add Task" form elements
@@ -234,74 +234,74 @@ test.describe('Tasks Page', () => {
 
     if (await titleInput.isVisible().catch(() => false)) {
       await titleInput.fill('ZZTEST task from tasks page');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Fill description if available
     if (await contentEditable.isVisible().catch(() => false)) {
       await contentEditable.click();
       await page.keyboard.type('ZZTEST automated task description from tasks page', { delay: 15 });
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Set Priority → "Low priority"
     const priorityBtn = page.getByText('Priority', { exact: true }).first();
     if (await priorityBtn.isVisible().catch(() => false)) {
       await priorityBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const lowOpt = page.getByText('Low priority').first();
       if (await lowOpt.isVisible().catch(() => false)) {
         await lowOpt.click();
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Set Assignee → "Hamza Hanif (You)"
     const assigneeBtn = page.getByText('Assignee', { exact: true }).first();
     if (await assigneeBtn.isVisible().catch(() => false)) {
       await assigneeBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const youOpt = page.getByText('Hamza Hanif (You)').first();
       if (await youOpt.isVisible().catch(() => false)) {
         await youOpt.click();
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Set Labels → "Product"
     const labelsBtn = page.getByText('Labels', { exact: true }).first();
     if (await labelsBtn.isVisible().catch(() => false)) {
       await labelsBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const productOpt = page.getByText('Product', { exact: true }).first();
       if (await productOpt.isVisible().catch(() => false)) {
         await productOpt.click();
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Submit — click "Add Task" button
     const addBtn = page.getByRole('button', { name: 'Add Task' });
     if (await addBtn.isVisible().catch(() => false)) {
       await addBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
     }
 
     // Verify task was added — search for it
     const searchBtns = page.getByLabel('Open search');
     await searchBtns.first().click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify search responded with results
     const matchEl = page.getByText(/matching\s*tasks?\s*found/i).first();
@@ -310,7 +310,7 @@ test.describe('Tasks Page', () => {
     for (let i = 0; i < 4 && !found; i++) {
       found = await matchEl.isVisible().catch(() => false)
         || await taskEl.isVisible().catch(() => false);
-      if (!found) await page.waitForTimeout(3000);
+      if (!found) await page.waitForLoadState('networkidle');
     }
     expect(found).toBe(true);
   });
@@ -341,7 +341,7 @@ test.describe('Tasks Page', () => {
 
     if (firstTaskTitle) {
       await page.mouse.click(firstTaskTitle.x, firstTaskTitle.y);
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
 
       // A detail panel/drawer should open — check for new visible elements
       const detailVisible = await page.evaluate(() => {
@@ -362,10 +362,10 @@ test.describe('Tasks Page', () => {
       const closeBtn = page.getByLabel(/close/i).first();
       if (await closeBtn.isVisible().catch(() => false)) {
         await closeBtn.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       } else {
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -378,7 +378,7 @@ test.describe('Tasks Page', () => {
     const moreActions = page.getByLabel('More actions').first();
     await expect(moreActions).toBeVisible({ timeout: 10_000 });
     await moreActions.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // A context menu should appear with options
     const menuVisible = await page.evaluate(() => {
@@ -398,7 +398,7 @@ test.describe('Tasks Page', () => {
 
     // Close menu
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T9 — Search ZZTEST task → change status to "In progress" → undo back to "To do"
@@ -408,12 +408,12 @@ test.describe('Tasks Page', () => {
     // Search for the ZZTEST task created in T6
     const searchBtns = page.getByLabel('Open search');
     await searchBtns.first().click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for search results to load
     const taskEl = page.getByText('ZZTEST task from tasks page').first();
@@ -422,7 +422,7 @@ test.describe('Tasks Page', () => {
     for (let i = 0; i < 4 && !found; i++) {
       found = await matchEl.isVisible().catch(() => false)
         || await taskEl.isVisible().catch(() => false);
-      if (!found) await page.waitForTimeout(3000);
+      if (!found) await page.waitForLoadState('networkidle');
     }
     expect(found).toBe(true);
 
@@ -441,13 +441,13 @@ test.describe('Tasks Page', () => {
     });
     expect(circlePos).toBeTruthy();
     await page.mouse.click(circlePos.x, circlePos.y);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Status menu should open — select "In progress"
     const inProgressItem = page.getByRole('menuitem', { name: 'In progress' });
     await expect(inProgressItem).toBeVisible({ timeout: 5000 });
     await inProgressItem.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Now undo — find the same task's status icon and click it again
     // After status change the icon may look different (half-filled or colored)
@@ -469,13 +469,13 @@ test.describe('Tasks Page', () => {
 
     if (undoCircle) {
       await page.mouse.click(undoCircle.x, undoCircle.y);
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       // Select "To do" to revert
       const todoItem = page.getByRole('menuitem', { name: 'To do' });
       if (await todoItem.isVisible().catch(() => false)) {
         await todoItem.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       } else {
         await page.keyboard.press('Escape');
       }
@@ -490,7 +490,7 @@ test.describe('Tasks Page', () => {
     const doItBtn = page.getByText('Do it for me').first();
     await expect(doItBtn).toBeVisible({ timeout: 10_000 });
     await doItBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Some action should occur — a panel, a confirmation, or the task changes state
     const bodyText = await page.locator('body').innerText();
@@ -499,7 +499,7 @@ test.describe('Tasks Page', () => {
 
     // Close any modal/drawer that opened
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // T10 — "View All" link
@@ -509,7 +509,7 @@ test.describe('Tasks Page', () => {
     const viewAll = page.getByText('View All', { exact: true }).first();
     if (await viewAll.isVisible().catch(() => false)) {
       await viewAll.click();
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
 
       // After clicking View All, more tasks should load
       const doItBtns = page.getByText('Do it for me');
@@ -537,7 +537,7 @@ test.describe('Tasks Page', () => {
     const nextBtn = page.locator('svg.lucide-chevron-right').last();
     if (await nextBtn.isVisible().catch(() => false)) {
       await nextBtn.click({ force: true });
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Date should have advanced
       const newDate = await page.evaluate(() => {
@@ -555,7 +555,7 @@ test.describe('Tasks Page', () => {
       const prevBtn = page.locator('svg.lucide-chevron-left').last();
       if (await prevBtn.isVisible().catch(() => false)) {
         await prevBtn.click({ force: true });
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
   });
@@ -568,7 +568,7 @@ test.describe('Tasks Page', () => {
     const dayBtn = page.getByText('Day', { exact: true }).first();
     if (await dayBtn.isVisible().catch(() => false)) {
       await dayBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       // Check for dropdown options (Day, Week, Month, etc.)
       const options = await page.evaluate(() => {
@@ -578,7 +578,7 @@ test.describe('Tasks Page', () => {
 
       // Close dropdown
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -589,12 +589,12 @@ test.describe('Tasks Page', () => {
     // Search for ZZTEST tasks
     const searchBtns = page.getByLabel('Open search');
     await searchBtns.first().click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for search results
     try {
@@ -614,7 +614,7 @@ test.describe('Tasks Page', () => {
       const moreActions = page.getByLabel('More actions').first();
       if (!await moreActions.isVisible().catch(() => false)) break;
       await moreActions.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
 
       // Click "Delete Task"
       const deleteItem = page.getByRole('menuitem', { name: 'Delete Task' });
@@ -623,17 +623,17 @@ test.describe('Tasks Page', () => {
         break;
       }
       await deleteItem.click();
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Handle confirmation dialog if present
       const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes/i }).first();
       if (await confirmBtn.isVisible().catch(() => false)) {
         await confirmBtn.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
       }
 
       deleted++;
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     expect(deleted).toBeGreaterThan(0);

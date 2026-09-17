@@ -12,7 +12,7 @@ test.describe('Team Page', () => {
       document.body.style.pointerEvents = '';
     }).catch(() => {});
     await tp.goto();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ╔═══════════════════════════════════════════════════╗
@@ -72,7 +72,7 @@ test.describe('Team Page', () => {
 
     const searchTerm = memberEmails[0];
     await tp.searchInput.fill(searchTerm);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const matchedDropdowns = await tp.roleDropdowns.count();
     expect(matchedDropdowns).toBeGreaterThanOrEqual(1);
@@ -80,18 +80,18 @@ test.describe('Team Page', () => {
     await expect(page.locator(`text=${searchTerm} >> visible=true`).first()).toBeVisible();
 
     await tp.searchInput.fill('');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Part B — gibberish search returns no results
     await tp.searchInput.fill('zzzznoexist999');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const filteredDropdowns = await tp.roleDropdowns.count();
     expect(filteredDropdowns).toBe(0);
 
     // Clear — all dropdowns restore
     await tp.searchInput.fill('');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const restoredDropdowns = await tp.roleDropdowns.count();
     expect(restoredDropdowns).toBe(initialDropdowns);
@@ -112,17 +112,17 @@ test.describe('Team Page', () => {
     const targetRole = isAdmin ? 'Team Member' : 'Admin';
 
     await firstDropdown.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(tp.changeRoleMenuItem).toBeVisible({ timeout: 3000 });
     await tp.changeRoleMenuItem.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('New Role')).toBeVisible({ timeout: 5000 });
 
     const roleCombobox = page.getByRole('combobox').filter({ hasText: /Admin|Team Member|Member/ });
     await roleCombobox.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const targetOption = page.getByRole('option', { name: targetRole });
     if (await targetOption.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -130,17 +130,17 @@ test.describe('Team Page', () => {
     } else {
       await page.locator('[data-slot="select-item"]').filter({ hasText: targetRole }).click();
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await tp.changeRoleSaveBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const updatedRole = await tp.roleDropdowns.first().textContent();
     expect(updatedRole.trim()).not.toBe(currentRole.trim());
@@ -157,15 +157,15 @@ test.describe('Team Page', () => {
     const targetRole = isAdmin ? 'Team Member' : 'Admin';
 
     await firstDropdown.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(tp.changeRoleMenuItem).toBeVisible({ timeout: 3000 });
     await tp.changeRoleMenuItem.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const roleCombobox = page.getByRole('combobox').filter({ hasText: /Admin|Team Member|Member/ });
     await roleCombobox.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const targetOption = page.getByRole('option', { name: targetRole });
     if (await targetOption.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -173,17 +173,17 @@ test.describe('Team Page', () => {
     } else {
       await page.locator('[data-slot="select-item"]').filter({ hasText: targetRole }).click();
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     await tp.changeRoleSaveBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const restoredRole = await tp.roleDropdowns.first().textContent();
     expect(restoredRole.trim()).not.toBe(currentRole.trim());
@@ -197,7 +197,7 @@ test.describe('Team Page', () => {
     test.setTimeout(60_000);
 
     await tp.inviteMembersBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('Invite EA Team Members')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Send an invitation to join your workspace')).toBeVisible();
@@ -212,32 +212,32 @@ test.describe('Team Page', () => {
     await expect(tp.sendInvitesBtn).toBeDisabled();
 
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('T5 — send invite for zztest user', async ({ page }) => {
     test.setTimeout(120_000);
 
     await tp.inviteMembersBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await tp.inviteEmailInput.fill('zztest-invite@example.com');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     const roleSelect = page.locator('select:visible').last();
     await roleSelect.selectOption({ index: 1 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(tp.sendInvitesBtn).toBeEnabled({ timeout: 3000 });
     await tp.sendInvitesBtn.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('T6 — pending section shows zztest invited user', async ({ page }) => {
@@ -255,22 +255,22 @@ test.describe('Team Page', () => {
     const pendingDropdown = tp.roleDropdowns.last();
     await expect(pendingDropdown).toBeVisible({ timeout: 5000 });
     await pendingDropdown.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(tp.revokeInvitationMenuItem).toBeVisible({ timeout: 3000 });
     await tp.revokeInvitationMenuItem.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(tp.revokeConfirmBtn).toBeVisible({ timeout: 5000 });
     await tp.revokeConfirmBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const zztestGone = await page.getByText('zztest-invite@example.com').isVisible().catch(() => false);
     expect(zztestGone).toBe(false);

@@ -81,7 +81,7 @@ test.describe('Your Day — full regression', () => {
 
     // Click to expand
     await firstViewCtx.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // After expand, there should be more text visible (context content)
     const afterText = await page.locator('body').innerText();
@@ -89,7 +89,7 @@ test.describe('Your Day — full regression', () => {
 
     // Click again to collapse
     await firstViewCtx.click();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // YD7 — summary section collapses and expands
@@ -102,7 +102,7 @@ test.describe('Your Day — full regression', () => {
 
     // Collapse
     await collapseBtn.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Work updates should be hidden
     const updatesVisible = await workUpdates.isVisible().catch(() => false);
@@ -116,7 +116,7 @@ test.describe('Your Day — full regression', () => {
     } else if (await collapseAgain.isVisible().catch(() => false)) {
       await collapseAgain.click();
     }
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Work updates should be visible again
     await expect(workUpdates).toBeVisible({ timeout: 5000 });
@@ -141,7 +141,7 @@ test.describe('Your Day — full regression', () => {
 
     // Click Done For You tab
     await doneTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Should show done items or content
     const bodyText = await page.locator('body').innerText();
@@ -149,7 +149,7 @@ test.describe('Your Day — full regression', () => {
 
     // Click Ready for You tab
     await readyTab.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const readyText = await page.locator('body').innerText();
     expect(readyText).toMatch(/Ready for You|All clear|caught up/i);
@@ -160,7 +160,7 @@ test.describe('Your Day — full regression', () => {
     const doneTab = page.getByText('Done For You').first();
     await expect(doneTab).toBeVisible();
     await doneTab.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // May have done items (View Drafts, Done label) or empty state (All clear)
     const bodyText = await page.locator('body').innerText();
@@ -173,7 +173,7 @@ test.describe('Your Day — full regression', () => {
 
     // Switch back
     await page.getByText('Ready for You').first().click();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // YD11 — calendar sidebar visible with date and events info
@@ -203,7 +203,7 @@ test.describe('Your Day — full regression', () => {
     // Click next day
     const nextDay = page.getByRole('button', { name: 'Next day' });
     await nextDay.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const afterCalendar = await calendar.innerText();
     expect(afterCalendar).not.toBe(beforeCalendar);
@@ -211,7 +211,7 @@ test.describe('Your Day — full regression', () => {
     // Click previous day to go back
     const prevDay = page.getByRole('button', { name: 'Previous day' });
     await prevDay.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     const restoredCalendar = await calendar.innerText();
     expect(restoredCalendar).toBe(beforeCalendar);
@@ -244,7 +244,7 @@ test.describe('Your Day — full regression', () => {
     const settingsBtn = page.getByRole('button', { name: 'Daily briefing settings', exact: true });
     await expect(settingsBtn).toBeVisible({ timeout: 10_000 });
     await settingsBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(
@@ -262,7 +262,7 @@ test.describe('Your Day — full regression', () => {
     await expect(page.getByRole('button', { name: 'Dictate' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Send' }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Panel is a <dialog> without [open] — Playwright treats contents as hidden
     // Use toBeAttached() and force:true for interactions
@@ -286,7 +286,7 @@ test.describe('Your Day — full regression', () => {
 
     // Close panel
     await page.getByRole('button', { name: 'Minimize' }).click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // YD16 — send message in modal and receive AI response
@@ -294,20 +294,20 @@ test.describe('Your Day — full regression', () => {
     test.setTimeout(120_000);
 
     await page.getByRole('button', { name: 'Send' }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByRole('button', { name: 'Show History' })).toBeAttached({ timeout: 10_000 });
 
     // Type message in modal's textbox (last one — first is the main page's hidden one)
     const modalInput = page.getByPlaceholder('Ask me anything...').last();
     await modalInput.click({ force: true });
     await modalInput.pressSequentially('is there any meeting today', { delay: 30 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Ask button should now be enabled — click it
     await page.getByRole('button', { name: 'Ask', exact: true }).click({ force: true });
 
     // Wait for AI response (can take a long time)
-    await page.waitForTimeout(30_000);
+    await page.waitForLoadState('networkidle');
 
     // Verify the dialog now has more content (AI response text)
     const dialogText = await page.evaluate(() => {
@@ -327,7 +327,7 @@ test.describe('Your Day — full regression', () => {
       const count = await page.getByRole('button', { name: 'Show History' }).count();
       if (count === 0) {
         await page.getByRole('button', { name: 'Send' }).click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         await expect(page.getByRole('button', { name: 'Show History' })).toBeAttached({ timeout: 10_000 });
       }
     }
@@ -338,22 +338,22 @@ test.describe('Your Day — full regression', () => {
 
     // Show History
     await page.getByRole('button', { name: 'Show History' }).click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     // Go back — click New Chat in history view, or reopen panel
     const newChatBtn = page.getByRole('button', { name: /new chat/i });
     if (await newChatBtn.count().then(c => c > 0).catch(() => false)) {
       await newChatBtn.click({ force: true });
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // More options — click to open, then dismiss by clicking panel title
     await ensurePanel();
     await page.getByRole('button', { name: 'More options' }).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     // Dismiss dropdown by clicking on the panel heading instead of the button
     const askCentralTitle = page.getByText('Ask Central').first();
     await askCentralTitle.click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // --- INPUT CONTROLS ---
 
@@ -361,17 +361,17 @@ test.describe('Your Day — full regression', () => {
 
     // Prompts
     await page.getByRole('button', { name: 'Prompts' }).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     // Close prompts by clicking the button again
     await page.getByRole('button', { name: 'Prompts' }).click({ force: true }).catch(() => {});
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Attach files
     await ensurePanel();
     await page.getByRole('button', { name: 'Attach files' }).click({ force: true });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
     await page.getByRole('button', { name: 'Attach files' }).click({ force: true }).catch(() => {});
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // --- EXPAND / MINIMIZE ---
 
@@ -379,11 +379,11 @@ test.describe('Your Day — full regression', () => {
 
     // Expand to full screen
     await page.getByRole('button', { name: 'Expand', exact: true }).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Minimize back
     await page.getByRole('button', { name: 'Minimize' }).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify Your Day page is still functional
     const greeting = page.locator('body').getByText(/Good (Morning|Afternoon|Evening)/i).first();
@@ -402,23 +402,23 @@ test.describe('Your Day — full regression', () => {
     // Scroll down through summary to see all work updates
     const lastViewCtx = page.getByText('View Context').last();
     await lastViewCtx.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Scroll back to top of summary
     await summaryTitle.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Press refresh summary button
     const refreshBtn = page.getByRole('button', { name: /Refresh (morning|afternoon|evening) summary/i });
     await expect(refreshBtn).toBeVisible();
     await refreshBtn.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Press briefing settings button (pencil icon next to refresh)
     const editBtn = page.getByRole('button', { name: 'Edit daily briefing settings' });
     await expect(editBtn).toBeVisible({ timeout: 15_000 });
     await editBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(
@@ -437,13 +437,13 @@ test.describe('Your Day — full regression', () => {
     const refreshTodos = page.getByRole('button', { name: 'Check for new to-dos' });
     await expect(refreshTodos).toBeVisible({ timeout: 10_000 });
     await refreshTodos.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Press Done For You tab
     const doneTab = page.getByText('Done For You').first();
     await expect(doneTab).toBeVisible();
     await doneTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/View Drafts|View Task|Drafted|Done|All clear|caught up/i);
@@ -452,22 +452,22 @@ test.describe('Your Day — full regression', () => {
     const viewBtn = page.getByText(/View Drafts|View Task/i).first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
       await ac.ensurePage('Your Day');
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     } else {
       // Scroll the Done For You section
       await page.evaluate(() => window.scrollBy(0, 300));
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Switch back to Ready for You
     const readyTab = page.getByText('Ready for You').first();
     if (await readyTab.isVisible().catch(() => false)) {
       await readyTab.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -477,7 +477,7 @@ test.describe('Your Day — full regression', () => {
     const openCalBtn = page.getByRole('button', { name: 'Open calendar' }).last();
     await expect(openCalBtn).toBeVisible({ timeout: 10_000 });
     await openCalBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // We're now on the full Calendar page
     await expect(page.getByRole('button', { name: 'Exit full calendar' })).toBeVisible({ timeout: 10_000 });
@@ -495,28 +495,28 @@ test.describe('Your Day — full regression', () => {
       const meetingLink = nextUpParent.locator('a').first();
       if (await meetingLink.isVisible().catch(() => false)) {
         await meetingLink.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const closeBtn = page.getByRole('button', { name: /close|back|cancel/i }).first();
         if (await closeBtn.isVisible().catch(() => false)) {
           await closeBtn.click();
         } else {
           await page.keyboard.press('Escape');
         }
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     } else {
       // No meeting in Next Up — click a calendar event on the timeline as fallback
       const calEvent = page.getByText(/Daily Standup|Product Pod|Feedback|Escalation/i).first();
       if (await calEvent.isVisible().catch(() => false)) {
         await calEvent.click();
-        await page.waitForTimeout(2000);
+        await page.waitForLoadState('domcontentloaded');
         const closeBtn = page.getByRole('button', { name: /close|back|cancel/i }).first();
         if (await closeBtn.isVisible().catch(() => false)) {
           await closeBtn.click();
         } else {
           await page.keyboard.press('Escape');
         }
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('domcontentloaded');
       }
     }
 
@@ -532,7 +532,7 @@ test.describe('Your Day — full regression', () => {
     const openCalBtn = page.getByRole('button', { name: 'Open calendar' }).last();
     await expect(openCalBtn).toBeVisible({ timeout: 10_000 });
     await openCalBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify we're on the full Calendar page
     await expect(page.getByRole('button', { name: 'Exit full calendar' })).toBeVisible({ timeout: 10_000 });
@@ -546,7 +546,7 @@ test.describe('Your Day — full regression', () => {
     const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const afterDate = await dateLabel.textContent();
     expect(afterDate).not.toBe(beforeDate);
@@ -554,7 +554,7 @@ test.describe('Your Day — full regression', () => {
     // Navigate backward (previous)
     const prevBtn = page.getByRole('button', { name: 'Previous', exact: true });
     await prevBtn.click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     const restoredDate = await dateLabel.textContent();
     expect(restoredDate).toBe(beforeDate);
@@ -570,7 +570,7 @@ test.describe('Your Day — full regression', () => {
       }
       window.scrollBy(0, 500);
     });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Return to Your Day
     await ac.ensurePage('Your Day');

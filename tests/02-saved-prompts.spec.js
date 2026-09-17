@@ -49,12 +49,12 @@ test.describe('Saved Prompts — linear flow', () => {
     const categorySelect = drawer.locator('[data-slot="select-trigger"]');
     if (await categorySelect.isVisible().catch(() => false)) {
       await categorySelect.click();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
       const option = page.locator('[role="option"]').first();
       if (await option.isVisible().catch(() => false)) {
         await option.click();
       }
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Turn OFF "Automatically run prompt when selected" (defaults ON)
@@ -62,7 +62,7 @@ test.describe('Saved Prompts — linear flow', () => {
     if (await autoRun.isVisible().catch(() => false)) {
       if (await autoRun.getAttribute('aria-checked') === 'true') {
         await autoRun.click();
-        await page.waitForTimeout(300);
+        await page.waitForLoadState('domcontentloaded');
       }
       await expect(autoRun).toHaveAttribute('aria-checked', 'false');
     }
@@ -75,14 +75,14 @@ test.describe('Saved Prompts — linear flow', () => {
 
     // Save
     await drawer.getByRole('button', { name: 'Save Prompt' }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   // SP2 — verify prompt appears in the panel
   test('first prompt visible in panel', async ({ page }) => {
     // Reopen panel to check
     await ac.promptsButton.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/ZZTEST-/);
   });
@@ -94,16 +94,16 @@ test.describe('Saved Prompts — linear flow', () => {
     if (await searchInput.isVisible().catch(() => false)) {
       await searchInput.click();
       await searchInput.pressSequentially('zzznonexistent', { delay: 20 });
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       // Verify no results or fewer results
       const noResults = await page.getByText(/no prompts|no results/i).first().isVisible().catch(() => false);
       // Clear search
       await searchInput.fill('');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
     // Close panel
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // SP4 — create second prompt
@@ -135,13 +135,13 @@ test.describe('Saved Prompts — linear flow', () => {
     if (await autoRun.isVisible().catch(() => false) &&
         await autoRun.getAttribute('aria-checked') === 'true') {
       await autoRun.click();
-      await page.waitForTimeout(300);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     await drawer.getByRole('button', { name: 'Save Prompt' }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // SP5 — navigate to Customize via manage/gear

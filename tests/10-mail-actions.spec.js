@@ -10,7 +10,7 @@ test.describe('Mail Actions — select and star', () => {
     const box = await compose.boundingBox();
     if (!box) return;
     await page.mouse.click(box.x + box.width + 20, box.y + box.height / 2);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await page.evaluate(() => {
       const els = document.querySelectorAll('div, span, button, a');
       for (const el of els) {
@@ -24,9 +24,9 @@ test.describe('Mail Actions — select and star', () => {
         }
       }
     });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
   }
 
   // Checkbox selector — these spans have opacity:0 and show on hover
@@ -39,10 +39,10 @@ test.describe('Mail Actions — select and star', () => {
       document.body.style.pointerEvents = '';
     }).catch(() => {});
     // Rate-limit backoff: wait 2s before any email page navigation
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await ac.ensurePage('Inbox');
     await page.getByLabel('Compose new email').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // M0 — switch to Google account (Zoom has 0 emails)
@@ -64,20 +64,20 @@ test.describe('Mail Actions — select and star', () => {
     const compactBtn = page.getByLabel(/compact view/i).first();
     if (await compactBtn.isVisible().catch(() => false)) {
       await compactBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click checkbox (span has opacity:0, force:true bypasses visibility)
     const checkbox = page.locator(checkboxSel).first();
     await checkbox.click({ force: true });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Bottom selection toolbar should show email count
     await expect(page.getByText(/\d+\s*email/i).first()).toBeVisible({ timeout: 5000 });
 
     // Deselect
     await checkbox.click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // M2 — toolbar select-all → all selected → click again → all deselected
@@ -87,7 +87,7 @@ test.describe('Mail Actions — select and star', () => {
     // Select first email to summon toolbar
     const checkbox = page.locator(checkboxSel).first();
     await checkbox.click({ force: true });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const countEl = page.getByText(/\d+\s*email/i).first();
     await expect(countEl).toBeVisible({ timeout: 5000 });
@@ -96,7 +96,7 @@ test.describe('Mail Actions — select and star', () => {
     const selectAllSel = 'div[class*="w-5"][class*="h-5"][class*="rounded"][class*="border-2"]';
     const selectAll = page.locator(selectAllSel).first();
     await selectAll.click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify count > 1 (all selected)
     const text = await countEl.textContent();
@@ -105,7 +105,7 @@ test.describe('Mail Actions — select and star', () => {
 
     // Click select-all again to deselect
     await selectAll.click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Toolbar should disappear
     const gone = !(await countEl.isVisible().catch(() => false));
@@ -124,14 +124,14 @@ test.describe('Mail Actions — select and star', () => {
       // All emails are already starred — unstar the first one, then re-star it
       const unstarBtn = page.getByLabel('Unstar email').first();
       await unstarBtn.click({ force: true });
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Now click "Star email" on the first unstarred email
     const starBtn = page.getByLabel('Star email').first();
     await expect(starBtn).toBeVisible({ timeout: 5000 });
     await starBtn.click({ force: true });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify it changed to "Unstar email" (star is now filled)
     // Leave it starred — M4 checks the Starred folder, M5 unstars it
@@ -143,10 +143,10 @@ test.describe('Mail Actions — select and star', () => {
     test.setTimeout(60_000);
 
     // Rate-limit backoff before folder navigation
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const starredLink = page.getByText('Starred', { exact: true }).first();
     await starredLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Verify starred emails are visible
     const unstarBtns = page.getByLabel('Unstar email');
@@ -160,10 +160,10 @@ test.describe('Mail Actions — select and star', () => {
     test.setTimeout(90_000);
 
     // Rate-limit backoff before folder navigation
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const starredLink = page.getByText('Starred', { exact: true }).first();
     await starredLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for starred emails to load
     const unstarBtns = page.getByLabel('Unstar email');
@@ -172,12 +172,12 @@ test.describe('Mail Actions — select and star', () => {
 
     // Unstar the last one (the one we starred in M3)
     await unstarBtns.last().click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Rate-limit backoff before going back to Inbox
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     await ac.ensurePage('Inbox');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify inbox loaded and email is not starred
     await expect(page.getByLabel('Compose new email')).toBeVisible({ timeout: 10_000 });
@@ -193,7 +193,7 @@ test.describe('Mail Actions — select and star', () => {
     const box = await star.boundingBox();
     if (box) {
       await page.mouse.move(box.x + 800, box.y + box.height / 2);
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
     }
   }
 
@@ -204,11 +204,11 @@ test.describe('Mail Actions — select and star', () => {
     // Hover row 2 → click Mark as Done
     await hoverEmailRow(page, 2);
     await page.getByLabel('Mark as done').nth(2).click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Hover row 2 (shifted after done removal) → toggle read/unread
     await hoverEmailRow(page, 2);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     const unreadBtn = page.getByLabel('Mark as unread');
     const readBtn = page.getByLabel('Mark as read');
     if (await unreadBtn.count() > 2) {
@@ -216,7 +216,7 @@ test.describe('Mail Actions — select and star', () => {
     } else if (await readBtn.count() > 2) {
       await readBtn.nth(2).click({ force: true });
     }
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // M7 — Create a Task from email hover → fill modal → Add Task → verify on Tasks page
@@ -226,7 +226,7 @@ test.describe('Mail Actions — select and star', () => {
     // Hover email row → click Create a Task
     await hoverEmailRow(page, 6);
     await page.getByLabel('Create a task').nth(6).click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Modal should open with "Follow up:" title
     const bodyText = await page.locator('body').innerText();
@@ -251,14 +251,14 @@ test.describe('Mail Actions — select and star', () => {
     if (await descEditor.isVisible().catch(() => false)) {
       await descEditor.click();
       await page.keyboard.type('ZZTEST automated task description', { delay: 15 });
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click "To do" status button and select first option
     const todoBtn = page.getByText('To do', { exact: false }).first();
     if (await todoBtn.isVisible().catch(() => false)) {
       await todoBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const option = page.getByRole('option').first();
       if (await option.isVisible().catch(() => false)) {
         await option.click();
@@ -270,28 +270,28 @@ test.describe('Mail Actions — select and star', () => {
           await page.keyboard.press('Escape');
         }
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Priority button → select "Low"
     const priorityBtn = page.getByText('Priority', { exact: true }).first();
     if (await priorityBtn.isVisible().catch(() => false)) {
       await priorityBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const lowOption = page.getByText('Low priority').first();
       if (await lowOption.isVisible().catch(() => false)) {
         await lowOption.click();
       } else {
         await page.keyboard.press('Escape');
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Assignee button → select "Hamza Hanif (You)"
     const assigneeBtn = page.getByText('Assignee', { exact: true }).first();
     if (await assigneeBtn.isVisible().catch(() => false)) {
       await assigneeBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const youOption = page.getByText('Hamza Hanif (You)').first();
       if (await youOption.isVisible().catch(() => false)) {
         await youOption.click();
@@ -303,14 +303,14 @@ test.describe('Mail Actions — select and star', () => {
           await page.keyboard.press('Escape');
         }
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click All Tasks button
     const allTasksBtn = page.getByText('All Tasks', { exact: true }).first();
     if (await allTasksBtn.isVisible().catch(() => false)) {
       await allTasksBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const option = page.getByRole('option').first();
       if (await option.isVisible().catch(() => false)) {
         await option.click();
@@ -322,14 +322,14 @@ test.describe('Mail Actions — select and star', () => {
           await page.keyboard.press('Escape');
         }
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Labels button → select "Product"
     const labelsBtn = page.getByText('Labels', { exact: true }).first();
     if (await labelsBtn.isVisible().catch(() => false)) {
       await labelsBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       const productLabel = page.getByText('Product', { exact: true }).first();
       if (await productLabel.isVisible().catch(() => false)) {
         await productLabel.click();
@@ -341,41 +341,41 @@ test.describe('Mail Actions — select and star', () => {
           await page.keyboard.press('Escape');
         }
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click calendar/date button
     const calBtn = page.getByText(/\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}/).first();
     if (await calBtn.isVisible().catch(() => false)) {
       await calBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Add Task
     const addTaskBtn = page.getByRole('button', { name: 'Add Task' });
     await expect(addTaskBtn).toBeVisible({ timeout: 5000 });
     await addTaskBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Navigate to Tasks page via sidebar
     await ac.ensurePage('Tasks');
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Click the Tasks-page search icon (second lucide-search, not the global top bar)
     const searchIcons = page.locator('svg.lucide-search');
     const count = await searchIcons.count();
     const taskSearchIcon = count > 1 ? searchIcons.nth(1) : searchIcons.first();
     await taskSearchIcon.click({ force: true });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Type the task title (or "Follow up" as fallback) in the search input
     const searchTerm = taskTitle ? taskTitle.substring(0, 30) : 'Follow up';
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill(searchTerm);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify search results show matching tasks
     await expect(page.getByText(/matching\s*(tasks?\s*found|results)/i).first()).toBeVisible({ timeout: 10_000 });
@@ -387,56 +387,56 @@ test.describe('Mail Actions — select and star', () => {
 
     // Click Compose new email
     await page.getByLabel('Compose new email').click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Fill To field with own email and confirm with Tab
     const toField = page.getByPlaceholder(/recipients|to/i).first();
     await expect(toField).toBeVisible({ timeout: 5000 });
     await toField.click();
     await toField.pressSequentially('hamzahanifsqae@gmail.com', { delay: 30 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill Subject
     const subjectField = page.getByPlaceholder(/subject/i).first();
     await expect(subjectField).toBeVisible({ timeout: 5000 });
     await subjectField.click();
     await subjectField.fill('ZZTEST compose email');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill Body — click the compose body area (first contenteditable inside compose)
     const bodyEditor = page.locator('[contenteditable="true"]').first();
     await expect(bodyEditor).toBeVisible({ timeout: 5000 });
     await bodyEditor.click();
     await page.keyboard.type('ZZTEST automated email body', { delay: 15 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Send with Ctrl+Enter (more reliable than clicking Send button)
     await page.keyboard.press('Control+Enter');
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Verify compose window closed (subject title should disappear)
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Rate-limit backoff before navigating to Sent folder
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for Sent page emails to load (not skeleton), then reload once
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle');
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
       found = await sentEmail.isVisible().catch(() => false);
     }
     if (!found) {
       // Second retry with longer backoff
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
       await page.reload({ waitUntil: 'domcontentloaded' });
     }
     await expect(sentEmail).toBeVisible({ timeout: 30_000 });
@@ -451,23 +451,23 @@ test.describe('Mail Actions — select and star', () => {
     test.setTimeout(120_000);
 
     // Navigate to Sent folder
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for the ZZTEST email to appear
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
     }
     await expect(sentEmail).toBeVisible({ timeout: 15_000 });
 
     // Click the email to open detail view
     await sentEmail.click();
-    await page.waitForTimeout(8000);
+    await page.waitForLoadState('networkidle');
 
     // Verify subject shown in detail view
     await expect(page.getByText('ZZTEST compose email').first()).toBeVisible({ timeout: 10_000 });
@@ -494,7 +494,7 @@ test.describe('Mail Actions — select and star', () => {
     } else {
       await sentLink.click({ force: true });
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   // M10 — Delete the ZZTEST sent email via detail view trash icon
@@ -502,23 +502,23 @@ test.describe('Mail Actions — select and star', () => {
     test.setTimeout(120_000);
 
     // Navigate to Sent folder
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Wait for ZZTEST email
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
     }
     await expect(sentEmail).toBeVisible({ timeout: 15_000 });
 
     // Open the email detail
     await sentEmail.click();
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Click the trash/delete icon in the detail toolbar
     const trashBtn = page.locator('button').filter({ has: page.locator('svg.lucide-trash-2, svg.lucide-trash') }).first();
@@ -529,7 +529,7 @@ test.describe('Mail Actions — select and star', () => {
       const deleteBtn = page.getByLabel(/delete|trash|move to trash/i).first();
       await deleteBtn.click({ force: true });
     }
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Clear overlay
     await page.evaluate(() => {
@@ -537,11 +537,11 @@ test.describe('Mail Actions — select and star', () => {
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => el.remove());
     }).catch(() => {});
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate back to Sent and verify ZZTEST email is gone
     await sentLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
     const gone = await page.getByText('ZZTEST compose email').isVisible().catch(() => false);
     expect(gone).toBe(false);
   });
@@ -551,11 +551,11 @@ test.describe('Mail Actions — select and star', () => {
     test.setTimeout(90_000);
 
     // Navigate to Trash folder
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const trashLink = page.getByText('Trash', { exact: true }).first();
     await expect(trashLink).toBeVisible({ timeout: 10_000 });
     await trashLink.click({ force: true });
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // Verify Trash folder loaded
     const trashText = await page.locator('body').innerText();
@@ -568,15 +568,15 @@ test.describe('Mail Actions — select and star', () => {
       .isVisible().catch(() => false);
     if (!zztestInTrash) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(5000);
+      await page.waitForLoadState('networkidle');
     }
     await expect(page.getByText('ZZTEST compose email').first()).toBeVisible({ timeout: 15_000 });
 
     // Go back to Inbox
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const inboxLink = page.getByText('Inbox', { exact: true }).first();
     await inboxLink.click({ force: true });
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   // M12 moved to 11-scheduling.spec.js

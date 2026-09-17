@@ -16,7 +16,7 @@ test.describe('Customize — all tabs full regression', () => {
   // Z1 — create test rule FIRST so all subsequent tests have a rule to work with
   test('create new test rule', async ({ page }) => {
     await ac.addRuleBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const sheetContent = page.locator('[data-slot="sheet-content"]');
     await expect(sheetContent).toBeVisible({ timeout: 10_000 });
@@ -26,12 +26,12 @@ test.describe('Customize — all tabs full regression', () => {
     await expect(textArea).toBeVisible();
     await textArea.click();
     await textArea.pressSequentially(testRuleName, { delay: 15 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     const createBtn = sheetContent.getByRole('button', { name: /Create Rule/i });
     await expect(createBtn).toBeEnabled({ timeout: 5000 });
     await createBtn.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toContain(testRuleName);
@@ -78,11 +78,11 @@ test.describe('Customize — all tabs full regression', () => {
 
     await ac.ruleSearch.click();
     await ac.ruleSearch.pressSequentially('zzznonexistent', { delay: 20 });
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
     const afterCount = await ruleButtons.count();
     expect(afterCount).toBeLessThanOrEqual(beforeCount);
     await ac.ruleSearch.fill('');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // Z6 — edit panel
@@ -90,7 +90,7 @@ test.describe('Customize — all tabs full regression', () => {
     const firstRule = page.locator('button[aria-label^="Edit rule:"]').first();
     await expect(firstRule).toBeVisible({ timeout: 15_000 });
     await firstRule.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     const panelVisible = await page.locator(
       '[data-state="open"], [role="dialog"], textarea, [data-slot="drawer-content"], [data-slot="sheet-content"]'
@@ -103,7 +103,7 @@ test.describe('Customize — all tabs full regression', () => {
     } else {
       await page.keyboard.press('Escape');
     }
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ── SAVED PROMPTS TAB ──
@@ -111,7 +111,7 @@ test.describe('Customize — all tabs full regression', () => {
   // ZS1 — switch tab
   test('Saved Prompts tab loads', async ({ page }) => {
     await ac.savedPromptsTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/Saved Prompts|prompt|ZZTEST/i);
   });
@@ -130,11 +130,11 @@ test.describe('Customize — all tabs full regression', () => {
       await searchInput.click();
       await searchInput.fill('');
       await searchInput.pressSequentially('ZZTEST', { delay: 20 });
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('domcontentloaded');
       const bodyText = await page.locator('body').innerText();
       expect(bodyText).toMatch(/ZZTEST/);
       await searchInput.fill('');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
     }
   });
 
@@ -143,7 +143,7 @@ test.describe('Customize — all tabs full regression', () => {
   // ZC1 — switch tab
   test('Community tab loads', async ({ page }) => {
     await ac.communityTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).toMatch(/Community|skill|install/i);
   });
@@ -165,7 +165,7 @@ test.describe('Customize — all tabs full regression', () => {
       test.skip(true, 'no install button found');
     }
     await installBtn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText.length).toBeGreaterThan(0);
   });
@@ -183,7 +183,7 @@ test.describe('Customize — all tabs full regression', () => {
 
     // Switch back to Rules tab
     await ac.rulesTab.click();
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     if (!testRuleName) {
       test.skip(true, 'no test rule was created');
@@ -193,7 +193,7 @@ test.describe('Customize — all tabs full regression', () => {
     await ac.ruleSearch.click();
     await ac.ruleSearch.fill('');
     await ac.ruleSearch.pressSequentially(testRuleName, { delay: 15 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Find and delete only this one rule
     const targetRule = page.locator(`button[aria-label="Edit rule: ${testRuleName}"]`);
@@ -210,7 +210,7 @@ test.describe('Customize — all tabs full regression', () => {
         // Fall back to clicking any delete button visible after searching
         await ac.deleteRuleBtns.first().click();
       }
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('domcontentloaded');
 
       // Handle confirmation UI
       const confirmLocators = [
@@ -228,12 +228,12 @@ test.describe('Customize — all tabs full regression', () => {
           }
         }
       }
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Verify the specific test rule is gone
     await page.reload();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText).not.toContain(testRuleName);
   });
