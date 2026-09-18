@@ -24,7 +24,7 @@ test.describe('Mail Actions — select and star', () => {
         }
       }
     });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.keyboard.press('Escape');
     await page.waitForLoadState('domcontentloaded');
   }
@@ -146,7 +146,7 @@ test.describe('Mail Actions — select and star', () => {
     await page.waitForLoadState('domcontentloaded');
     const starredLink = page.getByText('Starred', { exact: true }).first();
     await starredLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify starred emails are visible
     const unstarBtns = page.getByLabel('Unstar email');
@@ -163,7 +163,7 @@ test.describe('Mail Actions — select and star', () => {
     await page.waitForLoadState('domcontentloaded');
     const starredLink = page.getByText('Starred', { exact: true }).first();
     await starredLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for starred emails to load
     const unstarBtns = page.getByLabel('Unstar email');
@@ -172,12 +172,12 @@ test.describe('Mail Actions — select and star', () => {
 
     // Unstar the last one (the one we starred in M3)
     await unstarBtns.last().click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Rate-limit backoff before going back to Inbox
     await page.waitForLoadState('domcontentloaded');
     await ac.ensurePage('Inbox');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify inbox loaded and email is not starred
     await expect(page.getByLabel('Compose new email')).toBeVisible({ timeout: 10_000 });
@@ -204,7 +204,7 @@ test.describe('Mail Actions — select and star', () => {
     // Hover row 2 → click Mark as Done
     await hoverEmailRow(page, 2);
     await page.getByLabel('Mark as done').nth(2).click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Hover row 2 (shifted after done removal) → toggle read/unread
     await hoverEmailRow(page, 2);
@@ -226,11 +226,9 @@ test.describe('Mail Actions — select and star', () => {
     // Hover email row → click Create a Task
     await hoverEmailRow(page, 6);
     await page.getByLabel('Create a task').nth(6).click({ force: true });
-    await page.waitForLoadState('networkidle');
 
     // Modal should open with "Follow up:" title
-    const bodyText = await page.locator('body').innerText();
-    expect(bodyText).toMatch(/Follow up|Tasks|Add Task/i);
+    await expect(page.locator('body')).toContainText(/Follow up|Tasks|Add Task/i, { timeout: 15_000 });
 
     // Capture the task title for later verification
     const taskTitle = await page.evaluate(() => {
@@ -357,11 +355,11 @@ test.describe('Mail Actions — select and star', () => {
     const addTaskBtn = page.getByRole('button', { name: 'Add Task' });
     await expect(addTaskBtn).toBeVisible({ timeout: 5000 });
     await addTaskBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to Tasks page via sidebar
     await ac.ensurePage('Tasks');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click the Tasks-page search icon (second lucide-search, not the global top bar)
     const searchIcons = page.locator('svg.lucide-search');
@@ -375,7 +373,7 @@ test.describe('Mail Actions — select and star', () => {
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill(searchTerm);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify search results show matching tasks
     await expect(page.getByText(/matching\s*(tasks?\s*found|results)/i).first()).toBeVisible({ timeout: 10_000 });
@@ -387,7 +385,7 @@ test.describe('Mail Actions — select and star', () => {
 
     // Click Compose new email
     await page.getByLabel('Compose new email').click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill To field with own email and confirm with Tab
     const toField = page.getByPlaceholder(/recipients|to/i).first();
@@ -414,29 +412,22 @@ test.describe('Mail Actions — select and star', () => {
 
     // Send with Ctrl+Enter (more reliable than clicking Send button)
     await page.keyboard.press('Control+Enter');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Verify compose window closed (subject title should disappear)
-    await page.waitForLoadState('networkidle');
-
-    // Rate-limit backoff before navigating to Sent folder
-    await page.waitForLoadState('networkidle');
+    // Navigate to Sent folder
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for Sent page emails to load (not skeleton), then reload once
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
-      await page.waitForLoadState('networkidle');
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
       found = await sentEmail.isVisible().catch(() => false);
     }
     if (!found) {
       // Second retry with longer backoff
-      await page.waitForLoadState('networkidle');
       await page.reload({ waitUntil: 'domcontentloaded' });
     }
     await expect(sentEmail).toBeVisible({ timeout: 30_000 });
@@ -454,20 +445,18 @@ test.describe('Mail Actions — select and star', () => {
     await page.waitForLoadState('domcontentloaded');
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for the ZZTEST email to appear
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
     }
     await expect(sentEmail).toBeVisible({ timeout: 15_000 });
 
     // Click the email to open detail view
     await sentEmail.click();
-    await page.waitForLoadState('networkidle');
 
     // Verify subject shown in detail view
     await expect(page.getByText('ZZTEST compose email').first()).toBeVisible({ timeout: 10_000 });
@@ -494,7 +483,7 @@ test.describe('Mail Actions — select and star', () => {
     } else {
       await sentLink.click({ force: true });
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // M10 — Delete the ZZTEST sent email via detail view trash icon
@@ -505,20 +494,24 @@ test.describe('Mail Actions — select and star', () => {
     await page.waitForLoadState('domcontentloaded');
     const sentLink = page.getByText('Sent', { exact: true }).first();
     await sentLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for ZZTEST email
     const sentEmail = page.getByText('ZZTEST compose email').first();
     let found = await sentEmail.isVisible().catch(() => false);
     if (!found) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
     }
     await expect(sentEmail).toBeVisible({ timeout: 15_000 });
 
-    // Open the email detail
+    // Prior unclean runs can leave multiple "ZZTEST compose email" entries in
+    // Sent, so verify by count decreasing rather than assuming a single match.
+    const beforeCount = await page.getByText('ZZTEST compose email').count();
+
+    // Open the email detail — wait for the detail view to actually render
+    // before looking for its trash icon (Reply button is a reliable marker).
     await sentEmail.click();
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: 'Reply' }).first()).toBeVisible({ timeout: 10_000 });
 
     // Click the trash/delete icon in the detail toolbar
     const trashBtn = page.locator('button').filter({ has: page.locator('svg.lucide-trash-2, svg.lucide-trash') }).first();
@@ -529,7 +522,7 @@ test.describe('Mail Actions — select and star', () => {
       const deleteBtn = page.getByLabel(/delete|trash|move to trash/i).first();
       await deleteBtn.click({ force: true });
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Clear overlay
     await page.evaluate(() => {
@@ -539,11 +532,13 @@ test.describe('Mail Actions — select and star', () => {
     }).catch(() => {});
     await page.waitForLoadState('domcontentloaded');
 
-    // Navigate back to Sent and verify ZZTEST email is gone
+    // Navigate back to Sent and verify one fewer ZZTEST email is present
     await sentLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
-    const gone = await page.getByText('ZZTEST compose email').isVisible().catch(() => false);
-    expect(gone).toBe(false);
+    await expect(page.getByLabel('Compose new email')).toBeVisible({ timeout: 10_000 });
+    await expect.poll(
+      () => page.getByText('ZZTEST compose email').count(),
+      { timeout: 10_000 }
+    ).toBeLessThan(beforeCount);
   });
 
   // M11 — Trash folder loads and contains deleted email
@@ -555,20 +550,15 @@ test.describe('Mail Actions — select and star', () => {
     const trashLink = page.getByText('Trash', { exact: true }).first();
     await expect(trashLink).toBeVisible({ timeout: 10_000 });
     await trashLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
 
     // Verify Trash folder loaded
-    const trashText = await page.locator('body').innerText();
-    const trashLoaded = trashText.includes('Trash') ||
-      (await page.getByLabel('Compose new email').isVisible().catch(() => false));
-    expect(trashLoaded).toBe(true);
+    await expect(page.getByLabel('Compose new email')).toBeVisible({ timeout: 10_000 });
 
     // Check if deleted ZZTEST email is in trash
     const zztestInTrash = await page.getByText('ZZTEST compose email').first()
       .isVisible().catch(() => false);
     if (!zztestInTrash) {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
     }
     await expect(page.getByText('ZZTEST compose email').first()).toBeVisible({ timeout: 15_000 });
 
@@ -576,7 +566,7 @@ test.describe('Mail Actions — select and star', () => {
     await page.waitForLoadState('domcontentloaded');
     const inboxLink = page.getByText('Inbox', { exact: true }).first();
     await inboxLink.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // M12 moved to 11-scheduling.spec.js

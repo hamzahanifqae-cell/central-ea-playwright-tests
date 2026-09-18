@@ -9,3 +9,6 @@ blob-report/
 playwright/.cache/
 .chrome-profile/
 login-failure.png
+*.log
+*.tmp
+debug-*.png

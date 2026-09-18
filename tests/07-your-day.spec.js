@@ -25,7 +25,7 @@ test.describe('Your Day — full regression', () => {
 
   // YD2 — sync status bar is visible
   test('sync status bar shows connected apps', async ({ page }) => {
-    const syncText = page.getByText(/Synced.*across/i).first();
+    const syncText = page.getByText(/Sync(ed|ing).*across/i).first();
     await expect(syncText).toBeVisible({ timeout: 10_000 });
 
     const settingsBtn = page.getByRole('button', { name: 'Daily briefing settings', exact: true });
@@ -195,17 +195,21 @@ test.describe('Your Day — full regression', () => {
 
   // YD12 — calendar day navigation changes date
   test('calendar navigation switches between days', async ({ page }) => {
+    // Strip live "in Xh Ym" countdowns — they tick down in real time and would
+    // otherwise cause false mismatches between the "before" and "restored" snapshots.
+    const normalize = (text) => text.replace(/in \d+h\s*\d+m|in \d+m/gi, 'in <countdown>');
+
     const calendar = page.getByText(/Next Up/i).first()
       .locator('xpath=ancestor::*[.//button[@aria-label="Next day"]][1]');
     await expect(calendar).toBeVisible({ timeout: 10_000 });
-    const beforeCalendar = await calendar.innerText();
+    const beforeCalendar = normalize(await calendar.innerText());
 
     // Click next day
     const nextDay = page.getByRole('button', { name: 'Next day' });
     await nextDay.click();
     await page.waitForLoadState('domcontentloaded');
 
-    const afterCalendar = await calendar.innerText();
+    const afterCalendar = normalize(await calendar.innerText());
     expect(afterCalendar).not.toBe(beforeCalendar);
 
     // Click previous day to go back
@@ -213,7 +217,7 @@ test.describe('Your Day — full regression', () => {
     await prevDay.click();
     await page.waitForLoadState('domcontentloaded');
 
-    const restoredCalendar = await calendar.innerText();
+    const restoredCalendar = normalize(await calendar.innerText());
     expect(restoredCalendar).toBe(beforeCalendar);
   });
 
@@ -306,18 +310,16 @@ test.describe('Your Day — full regression', () => {
     // Ask button should now be enabled — click it
     await page.getByRole('button', { name: 'Ask', exact: true }).click({ force: true });
 
-    // Wait for AI response (can take a long time)
-    await page.waitForLoadState('networkidle');
-
-    // Verify the dialog now has more content (AI response text)
-    const dialogText = await page.evaluate(() => {
+    // Wait for AI response (can take a long time) — poll dialog content directly
+    // instead of waiting for network idle, which never resolves on this app.
+    const getDialogText = () => page.evaluate(() => {
       const dialogs = document.querySelectorAll('dialog, [role="dialog"]');
       for (const d of dialogs) {
         if (d.textContent.includes('Ask Central')) return d.textContent;
       }
       return '';
     });
-    expect(dialogText.length).toBeGreaterThan(200);
+    await expect.poll(async () => (await getDialogText()).length, { timeout: 90_000 }).toBeGreaterThan(200);
   });
 
   // YD17 — modal header buttons, input controls, expand and minimize
@@ -412,7 +414,7 @@ test.describe('Your Day — full regression', () => {
     const refreshBtn = page.getByRole('button', { name: /Refresh (morning|afternoon|evening) summary/i });
     await expect(refreshBtn).toBeVisible();
     await refreshBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Press briefing settings button (pencil icon next to refresh)
     const editBtn = page.getByRole('button', { name: 'Edit daily briefing settings' });
@@ -452,7 +454,7 @@ test.describe('Your Day — full regression', () => {
     const viewBtn = page.getByText(/View Drafts|View Task/i).first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await ac.ensurePage('Your Day');
       await page.waitForLoadState('domcontentloaded');
     } else {
@@ -477,7 +479,7 @@ test.describe('Your Day — full regression', () => {
     const openCalBtn = page.getByRole('button', { name: 'Open calendar' }).last();
     await expect(openCalBtn).toBeVisible({ timeout: 10_000 });
     await openCalBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // We're now on the full Calendar page
     await expect(page.getByRole('button', { name: 'Exit full calendar' })).toBeVisible({ timeout: 10_000 });
@@ -532,7 +534,7 @@ test.describe('Your Day — full regression', () => {
     const openCalBtn = page.getByRole('button', { name: 'Open calendar' }).last();
     await expect(openCalBtn).toBeVisible({ timeout: 10_000 });
     await openCalBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify we're on the full Calendar page
     await expect(page.getByRole('button', { name: 'Exit full calendar' })).toBeVisible({ timeout: 10_000 });

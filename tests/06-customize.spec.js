@@ -31,10 +31,8 @@ test.describe('Customize — all tabs full regression', () => {
     const createBtn = sheetContent.getByRole('button', { name: /Create Rule/i });
     await expect(createBtn).toBeEnabled({ timeout: 5000 });
     await createBtn.click();
-    await page.waitForLoadState('domcontentloaded');
 
-    const bodyText = await page.locator('body').innerText();
-    expect(bodyText).toContain(testRuleName);
+    await expect(page.locator('body')).toContainText(testRuleName, { timeout: 15_000 });
   });
 
   // Z2 — list renders (now guaranteed to have at least the rule we just created)
@@ -130,9 +128,7 @@ test.describe('Customize — all tabs full regression', () => {
       await searchInput.click();
       await searchInput.fill('');
       await searchInput.pressSequentially('ZZTEST', { delay: 20 });
-      await page.waitForLoadState('domcontentloaded');
-      const bodyText = await page.locator('body').innerText();
-      expect(bodyText).toMatch(/ZZTEST/);
+      await expect(page.locator('body')).toContainText('ZZTEST', { timeout: 10_000 });
       await searchInput.fill('');
       await page.waitForLoadState('domcontentloaded');
     }
@@ -165,7 +161,7 @@ test.describe('Customize — all tabs full regression', () => {
       test.skip(true, 'no install button found');
     }
     await installBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     const bodyText = await page.locator('body').innerText();
     expect(bodyText.length).toBeGreaterThan(0);
   });
@@ -233,8 +229,7 @@ test.describe('Customize — all tabs full regression', () => {
 
     // Verify the specific test rule is gone
     await page.reload();
-    await page.waitForLoadState('networkidle');
-    const bodyText = await page.locator('body').innerText();
-    expect(bodyText).not.toContain(testRuleName);
+    await expect(ac.ruleSearch).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('body')).not.toContainText(testRuleName, { timeout: 10_000 });
   });
 });

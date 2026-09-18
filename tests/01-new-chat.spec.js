@@ -173,7 +173,7 @@ test.describe('New Chat — full regression', () => {
     const saveBtn = drawer.getByRole('button', { name: 'Save Prompt' });
     await expect(saveBtn).toBeVisible();
     await saveBtn.click();
-    await page.waitForLoadState('networkidle');
+    await expect(drawer).toBeHidden({ timeout: 15_000 });
   });
 
   test('created prompt appears in prompts panel', async ({ page }) => {
@@ -282,9 +282,7 @@ test.describe('New Chat — full regression', () => {
 
     // Attach and verify preview
     await ac.attachFile(sample);
-    await page.waitForLoadState('networkidle');
-    const previewText = await page.locator('body').innerText();
-    expect(previewText).toMatch(/Widget A|sample\.txt|Electronics/i);
+    await expect(page.locator('body')).toContainText(/Widget A|sample\.txt|Electronics/i, { timeout: 15_000 });
 
     // Type description and send
     await ac.type('What is the price in the attached file? Reply with the price only.');
@@ -352,7 +350,7 @@ test.describe('New Chat — full regression', () => {
 
     // Save
     await drawer.getByRole('button', { name: 'Save Prompt' }).click();
-    await page.waitForLoadState('networkidle');
+    await expect(drawer).toBeHidden({ timeout: 15_000 });
 
     // Go to New Chat and trigger the auto-run prompt
     await ac.ensurePage('New Chat');
@@ -385,7 +383,7 @@ test.describe('New Chat — full regression', () => {
     await expect(searchInput).toBeVisible();
     await searchInput.click();
     await searchInput.fill('ZZTEST');
-    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('body')).toContainText('ZZTEST', { timeout: 10_000 });
   }
 
   // Helper: click the "..." button on first ZZTEST row using bounding box
@@ -405,9 +403,6 @@ test.describe('New Chat — full regression', () => {
   test('three-dot menu — edit, share, delete prompt sequentially', async ({ page }) => {
     test.setTimeout(120_000);
     await goToSavedPromptsAndSearch(page, ac);
-
-    const bodyText = await page.locator('body').innerText();
-    expect(bodyText).toContain('ZZTEST');
 
     // Capture the specific name of the first ZZTEST prompt (will be deleted later)
     const firstPromptEl = page.getByText(/ZZTEST-\S+/).first();
@@ -494,8 +489,7 @@ test.describe('New Chat — full regression', () => {
 
     // Reload and re-search to verify the specific prompt was deleted
     await goToSavedPromptsAndSearch(page, ac);
-    const afterText = await page.locator('body').innerText();
-    expect(afterText).not.toContain(deletedPromptName);
+    await expect(page.locator('body')).not.toContainText(deletedPromptName, { timeout: 10_000 });
 
     // Return to New Chat
     await ac.ensurePage('New Chat');

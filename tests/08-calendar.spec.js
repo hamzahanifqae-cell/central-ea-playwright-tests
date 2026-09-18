@@ -31,7 +31,7 @@ test.describe('Calendar — full regression', () => {
 
     const nextUp = page.getByText('Next Up').first();
     await expect(nextUp).toBeVisible({ timeout: 10_000 });
-    expect(bodyText).toMatch(/Events?\s*\||\d+\s*hours?\s*Booked|Nothing scheduled/i);
+    await expect(page.locator('body')).toContainText(/Events?\s*\||\d+\s*hours?\s*Booked|Nothing scheduled/i, { timeout: 10_000 });
   });
 
   // C3 — click event opens detail popup with meeting info
@@ -287,7 +287,7 @@ test.describe('Calendar — full regression', () => {
     } else {
       test.skip(true, 'no exit button found');
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForURL((u) => !u.pathname.includes('/ea/calendar'), { timeout: 10_000 }).catch(() => {});
 
     expect(page.url()).not.toContain('/ea/calendar');
   });

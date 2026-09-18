@@ -412,7 +412,8 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     if (await eventTypesTab.count() > 0) {
       await eventTypesTab.click();
       await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('scheduler').or(page.url().toContain('event')).catch(() => {});
+      const url = page.url();
+      expect(url.includes('scheduler') || url.includes('event')).toBe(true);
     }
   });
 
@@ -424,7 +425,12 @@ test.describe('Scheduling (Dashboard & Bookings)', () => {
     if (await createBtn.count() > 0) {
       await createBtn.click();
       await page.waitForLoadState('domcontentloaded');
-      expect(page.url()).toContain('create').or(page.url().toContain('new')).catch(() => {});
+      // Some UIs navigate to a create/new URL, others open an in-page modal —
+      // accept either as evidence the create flow actually started.
+      const url = page.url();
+      const urlChanged = url.includes('create') || url.includes('new');
+      const modalVisible = await page.locator('[role="dialog"]').first().isVisible().catch(() => false);
+      expect(urlChanged || modalVisible).toBe(true);
     }
   });
 

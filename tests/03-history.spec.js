@@ -40,7 +40,10 @@ test.describe('History — full regression', () => {
     } else {
       await firstMenuBtn.locator('xpath=..').click();
     }
-    await page.waitForLoadState('networkidle');
+    await Promise.race([
+      page.waitForURL((u) => !u.pathname.endsWith('/history'), { timeout: 10_000 }),
+      page.locator('textarea[data-slot="textarea"]').waitFor({ state: 'visible', timeout: 10_000 }),
+    ]).catch(() => {});
     const url = page.url();
     const navigated = !url.endsWith('/history');
     if (!navigated) {
@@ -106,10 +109,8 @@ test.describe('History — full regression', () => {
       await page.keyboard.up('Control');
       await page.keyboard.type('ZZTEST-Renamed', { delay: 15 });
       await page.keyboard.press('Enter');
-      await page.waitForLoadState('domcontentloaded');
 
-      const bodyText = await page.locator('body').innerText();
-      expect(bodyText).toContain('ZZTEST-Renamed');
+      await expect(page.locator('body')).toContainText('ZZTEST-Renamed', { timeout: 10_000 });
 
       // Rename back to original
       await ac.historyMenus.first().click();
@@ -135,8 +136,11 @@ test.describe('History — full regression', () => {
     await ac.historySearch.click();
     await ac.historySearch.fill('');
     await ac.historySearch.pressSequentially('pong', { delay: 20 });
-    await page.waitForLoadState('domcontentloaded');
 
+    // Let the debounced search results actually populate before deciding
+    // there's nothing to delete — a bare count() right after typing can
+    // catch the list mid-fetch and read a false 0.
+    await ac.historyMenus.first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     const menuCount = await ac.historyMenus.count();
     if (menuCount === 0) {
       test.skip(true, 'no test conversation found to delete');

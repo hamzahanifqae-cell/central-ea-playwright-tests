@@ -75,7 +75,7 @@ test.describe('Saved Prompts — linear flow', () => {
 
     // Save
     await drawer.getByRole('button', { name: 'Save Prompt' }).click();
-    await page.waitForLoadState('networkidle');
+    await expect(drawer).toBeHidden({ timeout: 30_000 });
   });
 
   // SP2 — verify prompt appears in the panel

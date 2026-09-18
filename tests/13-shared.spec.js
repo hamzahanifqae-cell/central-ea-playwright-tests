@@ -23,7 +23,7 @@ test.describe('Shared Page', () => {
     test.setTimeout(60_000);
 
     await ac.goto('Shared');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const emptyMsg = page.getByText('No threads here yet');
     sharedIsEmpty = await emptyMsg.isVisible().catch(() => false);
@@ -46,38 +46,25 @@ test.describe('Shared Page', () => {
     test.setTimeout(90_000);
 
     await ac.goto('Inbox');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.getByLabel('Compose new email').waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
     await page.waitForLoadState('domcontentloaded');
 
-    // Find an email that is NOT already assigned — try multiple emails
-    const emailRows = await page.evaluate(() => {
-      const rows = [];
-      const main = document.querySelector('main') || document.body;
-      const links = main.querySelectorAll('a, div[role="row"], div[class*="email"], tr');
-      for (const row of links) {
-        const rect = row.getBoundingClientRect();
-        if (rect.y > 150 && rect.y < 700 && rect.width > 300 && rect.height > 30) {
-          const text = row.innerText?.trim() || '';
-          if (text.length > 5 && !text.includes('Assigned')) {
-            rows.push({ y: Math.round(rect.y), x: Math.round(rect.x + rect.width / 2), text: text.substring(0, 60) });
-          }
-        }
-      }
-      return rows;
-    });
-
-    // Click on the first unassigned email row
-    if (emailRows.length > 0) {
-      await page.mouse.click(emailRows[0].x, emailRows[0].y);
+    // Click an email row via its checkbox's ancestor row container — more
+    // reliable than computing pixel coordinates, which can miss the row
+    // entirely or land on a child control (checkbox/star) instead.
+    const checkboxes = page.getByRole('checkbox', { name: 'Select email' });
+    await expect(checkboxes.first()).toBeVisible({ timeout: 15_000 });
+    const checkboxCount = await checkboxes.count();
+    const idx = checkboxCount > 1 ? 1 : 0; // skip first in case it's already assigned
+    const targetCheckbox = checkboxes.nth(idx);
+    const row = targetCheckbox.locator('xpath=ancestor::div[contains(@class,"cursor-pointer") or @role="button" or @tabindex][1]');
+    if (await row.isVisible().catch(() => false)) {
+      await row.click();
     } else {
-      // Fallback — click second email (first might be assigned)
-      const emails = page.getByText('Hamza Hanif');
-      const count = await emails.count();
-      const idx = count > 1 ? 1 : 0;
-      await emails.nth(idx).click();
+      await targetCheckbox.locator('xpath=../..').click();
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify email detail view opens (Reply button always present)
     await expect(page.getByRole('button', { name: 'Reply' }).first()).toBeVisible({ timeout: 10_000 });
@@ -96,7 +83,7 @@ test.describe('Shared Page', () => {
     const selfOption = page.getByText('Hamza Hanif (You)');
     await expect(selfOption).toBeVisible({ timeout: 5000 });
     await selfOption.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ╔═══════════════════════════════════════════════════╗
@@ -107,7 +94,7 @@ test.describe('Shared Page', () => {
     test.setTimeout(60_000);
 
     await ac.goto('Shared');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('No threads here yet')).not.toBeVisible({ timeout: 5000 });
 
@@ -125,27 +112,16 @@ test.describe('Shared Page', () => {
 
     // Navigate to Shared page first (in case prior test failed)
     await ac.goto('Shared');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Click each filter tab using evaluate to avoid sidebar "Shared" link collision
-    // Tabs are in content area (x > 250) near the top of the page
+    // Scope to <main> so the sidebar's "Shared" nav link isn't matched —
+    // the tabs are ordinary buttons inside the page content.
     const tabNames = ['Assigned', 'Shared', 'Mentioned', 'All'];
 
     for (const name of tabNames) {
-      const clicked = await page.evaluate((tabName) => {
-        const elements = document.querySelectorAll('button, a, [role="tab"], span');
-        for (const el of elements) {
-          const text = el.textContent?.trim();
-          const rect = el.getBoundingClientRect();
-          if (text === tabName && rect.x > 250 && rect.y < 350 && rect.width > 15 && rect.height > 10) {
-            el.click();
-            return true;
-          }
-        }
-        return false;
-      }, name);
-
-      expect(clicked).toBe(true);
+      const tabBtn = page.locator('main').getByRole('button', { name, exact: true }).first();
+      await expect(tabBtn).toBeVisible({ timeout: 5000 });
+      await tabBtn.click();
       await page.waitForLoadState('domcontentloaded');
     }
   });
@@ -162,7 +138,7 @@ test.describe('Shared Page', () => {
     const count = await threads.count();
     if (count > 0) {
       await threads.nth(count - 1).click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const commentBtn = page.getByRole('button', { name: 'Add team comments' });
@@ -182,7 +158,7 @@ test.describe('Shared Page', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await page.keyboard.press('Enter');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('hamzahanifsqae').first()).toBeVisible({ timeout: 5000 });
   });
@@ -200,11 +176,11 @@ test.describe('Shared Page', () => {
     const removeBtn = page.getByText('Remove', { exact: true }).first();
     await expect(removeBtn).toBeVisible({ timeout: 5000 });
     await removeBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Reload shared page
     await ac.goto('Shared');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify thread count decreased or page is empty
     const emptyMsg = page.getByText('No threads here yet');
@@ -231,7 +207,7 @@ test.describe('Shared Page', () => {
 
     if (count > 0) {
       await threads.first().click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Verify detail panel shows "Remove" button
       await expect(page.getByText('Remove').first()).toBeVisible({ timeout: 10_000 });

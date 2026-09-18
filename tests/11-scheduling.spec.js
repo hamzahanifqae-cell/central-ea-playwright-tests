@@ -44,14 +44,14 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
           }
         }
       });
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.keyboard.press('Escape');
       await page.waitForLoadState('domcontentloaded');
     }
 
     // Click Compose new email
     await page.getByLabel('Compose new email').click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Fill To field
     const toField = page.getByPlaceholder(/recipients|to/i).first();
@@ -96,7 +96,7 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
         }
       }
     });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify schedule modal is open
     await expect(page.getByText('Schedule to send').first()).toBeVisible({ timeout: 8000 });
@@ -116,14 +116,14 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
     const scheduleBtn = page.getByRole('button', { name: 'Schedule' });
     await expect(scheduleBtn).toBeVisible({ timeout: 5000 });
     await scheduleBtn.click({ force: true });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // After Schedule click, compose window should close
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
     }).catch(() => {});
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to Scheduled folder — wait for emails to load
     await page.goto('/app/ea/email/scheduled', { waitUntil: 'domcontentloaded' });
@@ -136,7 +136,7 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
       await expect.poll(() => page.locator('body').innerText(), { timeout: 20_000 })
         .not.toMatch(/^\s*Central\s*$/);
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify ZZTEST scheduled email in the list
     await expect.poll(
@@ -161,13 +161,14 @@ test.describe.skip('Scheduling (Email) — temporarily skipped due to page/backe
       const btn = document.querySelector('[aria-label="Cancel scheduled email"]');
       if (btn) btn.click();
     });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Reload Scheduled folder — wait for emails to load, then verify count decreased
     await page.goto('/app/ea/email/scheduled', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
 
-    const countAfter = await page.getByLabel('Cancel scheduled email').count();
-    expect(countAfter).toBeLessThan(countBefore);
+    await expect.poll(
+      () => page.getByLabel('Cancel scheduled email').count(),
+      { timeout: 20_000 }
+    ).toBeLessThan(countBefore);
   });
 });

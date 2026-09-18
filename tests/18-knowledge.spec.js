@@ -13,6 +13,18 @@ test.describe('Knowledge Base', () => {
     }).catch(() => {});
     await kb.goto();
     await page.waitForLoadState('domcontentloaded');
+
+    // A confirm-deletion dialog from the previous test can survive this
+    // navigation (portal-rendered dialogs aren't always torn down by a
+    // client-side route change) and block every click in the next test.
+    // Proactively dismiss anything left open before starting.
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => {
+      document.documentElement.style.pointerEvents = '';
+      document.body.style.pointerEvents = '';
+      document.querySelectorAll('[data-slot="alert-dialog-overlay"], .fixed.inset-0').forEach(el => el.remove());
+    }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
   });
 
   // ═══════════════════════════════════════════════════
@@ -77,9 +89,9 @@ test.describe('Knowledge Base', () => {
     const reImportBtn = page.getByRole('button', { name: 'Re-import' });
     if (await reImportBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const urlSection = kb.urlImportsSection;
     await urlSection.scrollIntoViewIfNeeded({ timeout: 10_000 });
@@ -97,8 +109,7 @@ test.describe('Knowledge Base', () => {
 
     // Verify zztest entry visible
     const zzEntry = page.getByText(/zztest-knowledge/i).first();
-    const entryVisible = await zzEntry.isVisible().catch(() => false);
-    expect(entryVisible).toBe(true);
+    await expect(zzEntry).toBeVisible({ timeout: 15_000 });
 
     // Toggle on/off
     const toggle = page.getByLabel(/Toggle .* active/).first();
@@ -113,7 +124,7 @@ test.describe('Knowledge Base', () => {
     const viewBtn = kb.viewContentBtns().first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Dismiss the content drawer
       const drawerCancel = page.getByRole('button', { name: 'Cancel' });
@@ -169,12 +180,12 @@ test.describe('Knowledge Base', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await kb.addTextBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const reImportBtn = page.getByRole('button', { name: /Re-import|Overwrite|Replace/i });
     if (await reImportBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const textSection = kb.textImportsSection;
@@ -193,8 +204,7 @@ test.describe('Knowledge Base', () => {
 
     // Verify ZZTEST entry
     const zzEntry = page.getByText(/ZZTEST/i).first();
-    const entryVisible = await zzEntry.isVisible().catch(() => false);
-    expect(entryVisible).toBe(true);
+    await expect(zzEntry).toBeVisible({ timeout: 15_000 });
 
     // Toggle on/off
     const toggle = page.getByLabel(/Toggle .* active/).first();
@@ -209,7 +219,7 @@ test.describe('Knowledge Base', () => {
     const viewBtn = kb.viewContentBtns().first();
     if (await viewBtn.isVisible().catch(() => false)) {
       await viewBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Dismiss the content drawer
       const drawerCancel = page.getByRole('button', { name: 'Cancel' });
@@ -268,12 +278,12 @@ test.describe('Knowledge Base', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await kb.addEntryBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const reImportBtn = page.getByRole('button', { name: /Re-import|Overwrite|Replace/i });
     if (await reImportBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await reImportBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
 
     const faqsSection = kb.faqsSection;
@@ -291,8 +301,7 @@ test.describe('Knowledge Base', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const zzEntry = page.getByText(/ZZTEST/i).first();
-    const entryVisible = await zzEntry.isVisible().catch(() => false);
-    expect(entryVisible).toBe(true);
+    await expect(zzEntry).toBeVisible({ timeout: 15_000 });
 
     // Toggle on/off
     const toggle = page.getByLabel(/Toggle .* active/).first();
@@ -348,7 +357,7 @@ test.describe('Knowledge Base', () => {
       expect(toggles).toBeGreaterThan(0);
 
       await kb.syncAllBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Collapse
@@ -443,7 +452,7 @@ test.describe('Knowledge Base', () => {
 
     await expect(kb.addMemoryBtn).toBeEnabled({ timeout: 3000 });
     await kb.addMemoryBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify — textarea cleared or success
     const textareaVal = await kb.memoriesTextarea.inputValue().catch(() => '');
@@ -454,11 +463,12 @@ test.describe('Knowledge Base', () => {
   test('K16 — expand Memories section and verify ZZTEST entry', async ({ page }) => {
     test.setTimeout(90_000);
 
-    // Search to narrow results (164 memories total)
+    // Search to narrow results (164 memories total) — wait for the debounced
+    // search to actually settle before checking visibility, otherwise this
+    // reads the pre-filter DOM and silently skips the rest of the test.
     await kb.searchInput.fill('ZZTEST memory');
-    await page.waitForLoadState('networkidle');
-
     const memSection = kb.memoriesSection;
+    await memSection.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     const memVisible = await memSection.isVisible().catch(() => false);
     if (!memVisible) return;
 
@@ -467,8 +477,7 @@ test.describe('Knowledge Base', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const zzEntry = page.getByText(/ZZTEST memory/i).first();
-    const entryVisible = await zzEntry.isVisible().catch(() => false);
-    expect(entryVisible).toBe(true);
+    await expect(zzEntry).toBeVisible({ timeout: 15_000 });
 
     // Toggle on/off
     const toggle = page.getByLabel(/Toggle .* active/).first();
@@ -545,7 +554,7 @@ test.describe('Knowledge Base', () => {
 
     await expect(kb.searchInput).toBeVisible({ timeout: 5000 });
     await kb.searchInput.fill('Project Plan');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const val = await kb.searchInput.inputValue();
     expect(val).toBe('Project Plan');
@@ -591,11 +600,21 @@ test.describe('Knowledge Base', () => {
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
         await page.waitForLoadState('domcontentloaded');
-        const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
+        // Exact match only — a broad substring regex here also matches every
+        // row's "Delete source" trash-icon button (which sits earlier in DOM
+        // order than the modal), so .first() would click a row instead of
+        // actually confirming, leaving the dialog stuck open forever.
+        const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true });
         if (await confirmBtn.isVisible().catch(() => false)) {
-          await confirmBtn.click();
+          // The dialog can unmount mid-click as the row re-renders after
+          // deletion — that race is harmless (the click already registered),
+          // so swallow it instead of letting it fail the whole test.
+          await confirmBtn.click().catch(() => {});
           await page.waitForLoadState('domcontentloaded');
         }
+        // Wait on the dialog role itself, not just the overlay class — more
+        // reliable since Radix can swap in a fresh overlay node per open.
+        await page.getByRole('alertdialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
         deleted++;
       } else break;
     }
@@ -618,11 +637,21 @@ test.describe('Knowledge Base', () => {
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
         await page.waitForLoadState('domcontentloaded');
-        const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
+        // Exact match only — a broad substring regex here also matches every
+        // row's "Delete source" trash-icon button (which sits earlier in DOM
+        // order than the modal), so .first() would click a row instead of
+        // actually confirming, leaving the dialog stuck open forever.
+        const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true });
         if (await confirmBtn.isVisible().catch(() => false)) {
-          await confirmBtn.click();
+          // The dialog can unmount mid-click as the row re-renders after
+          // deletion — that race is harmless (the click already registered),
+          // so swallow it instead of letting it fail the whole test.
+          await confirmBtn.click().catch(() => {});
           await page.waitForLoadState('domcontentloaded');
         }
+        // Wait on the dialog role itself, not just the overlay class — more
+        // reliable since Radix can swap in a fresh overlay node per open.
+        await page.getByRole('alertdialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
         deleted++;
       } else break;
     }
@@ -645,11 +674,21 @@ test.describe('Knowledge Base', () => {
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
         await page.waitForLoadState('domcontentloaded');
-        const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
+        // Exact match only — a broad substring regex here also matches every
+        // row's "Delete source" trash-icon button (which sits earlier in DOM
+        // order than the modal), so .first() would click a row instead of
+        // actually confirming, leaving the dialog stuck open forever.
+        const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true });
         if (await confirmBtn.isVisible().catch(() => false)) {
-          await confirmBtn.click();
+          // The dialog can unmount mid-click as the row re-renders after
+          // deletion — that race is harmless (the click already registered),
+          // so swallow it instead of letting it fail the whole test.
+          await confirmBtn.click().catch(() => {});
           await page.waitForLoadState('domcontentloaded');
         }
+        // Wait on the dialog role itself, not just the overlay class — more
+        // reliable since Radix can swap in a fresh overlay node per open.
+        await page.getByRole('alertdialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
         deleted++;
       } else break;
     }
@@ -659,9 +698,8 @@ test.describe('Knowledge Base', () => {
     test.setTimeout(120_000);
 
     await kb.searchInput.fill('ZZTEST memory');
-    await page.waitForLoadState('networkidle');
-
     const memSection = kb.memoriesSection;
+    await memSection.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
     const memVisible = await memSection.isVisible().catch(() => false);
     if (!memVisible) {
       await kb.searchInput.fill('');
@@ -681,11 +719,21 @@ test.describe('Knowledge Base', () => {
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
         await page.waitForLoadState('domcontentloaded');
-        const confirmBtn = page.getByRole('button', { name: /delete|confirm|yes|remove/i }).first();
+        // Exact match only — a broad substring regex here also matches every
+        // row's "Delete source" trash-icon button (which sits earlier in DOM
+        // order than the modal), so .first() would click a row instead of
+        // actually confirming, leaving the dialog stuck open forever.
+        const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true });
         if (await confirmBtn.isVisible().catch(() => false)) {
-          await confirmBtn.click();
+          // The dialog can unmount mid-click as the row re-renders after
+          // deletion — that race is harmless (the click already registered),
+          // so swallow it instead of letting it fail the whole test.
+          await confirmBtn.click().catch(() => {});
           await page.waitForLoadState('domcontentloaded');
         }
+        // Wait on the dialog role itself, not just the overlay class — more
+        // reliable since Radix can swap in a fresh overlay node per open.
+        await page.getByRole('alertdialog').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
         deleted++;
       } else break;
     }

@@ -222,7 +222,7 @@ test.describe('Inbox — full regression', () => {
 
     // Save restored values
     await dialog2.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(dialog2).not.toBeVisible({ timeout: 10_000 }).catch(() => {});
+    await expect(dialog2).not.toBeVisible({ timeout: 10_000 });
     await page.waitForLoadState('domcontentloaded');
 
     // Clear overlay and navigate fresh for clean state
@@ -233,6 +233,30 @@ test.describe('Inbox — full regression', () => {
     await page.keyboard.press('Escape');
     await page.waitForLoadState('domcontentloaded');
     await ac.goto('Inbox');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Verify the restore actually persisted — reopen the category and check
+    // its label reverted. Without this, a failed restore silently corrupts
+    // the category name for good (this happened once already).
+    await page.getByLabel('Manage categories').click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.getByLabel('Edit category').first().click();
+    await page.waitForLoadState('domcontentloaded');
+
+    const dialog3 = page.locator('[role="dialog"]').filter({ hasText: 'Edit Category' });
+    await expect(dialog3).toBeVisible({ timeout: 5000 });
+    let labelInput3 = dialog3.locator('input[placeholder*="Client Feedback"]');
+    if (!(await labelInput3.isVisible().catch(() => false))) {
+      labelInput3 = dialog3.locator('input[type="text"], input:not([type]):not([role])').first();
+    }
+    await expect(labelInput3).toHaveValue(originalLabel, { timeout: 5000 });
+
+    // Two Escapes: one for the Edit Category dialog, one for the underlying
+    // Manage Categories menu — leaving the menu open breaks the next test,
+    // which expects a fresh click to open it (not toggle it closed).
+    await page.keyboard.press('Escape');
+    await page.waitForLoadState('domcontentloaded');
+    await page.keyboard.press('Escape');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -291,13 +315,14 @@ test.describe('Inbox — full regression', () => {
 
     await searchInput.pressSequentially('test', { delay: 20 });
     await page.keyboard.press('Enter');
-    await page.waitForLoadState('networkidle');
 
-    // Wait for search results or "no results" indicator
-    const bodyText = await page.locator('body').innerText();
-    const hasResults = bodyText.match(/test/i) !== null;
-    const hasNoResults = bodyText.match(/no (results|emails|matches)|nothing found/i) !== null;
-    expect(hasResults || hasNoResults).toBe(true);
+    // Wait for search results or "no results" indicator to actually render
+    await expect.poll(async () => {
+      const bodyText = await page.locator('body').innerText();
+      const hasResults = bodyText.match(/test/i) !== null;
+      const hasNoResults = bodyText.match(/no (results|emails|matches)|nothing found/i) !== null;
+      return hasResults || hasNoResults;
+    }, { timeout: 15_000 }).toBe(true);
 
     // Clear search — click the Clear Search button or X icon
     const clearSearchBtn = page.getByRole('button', { name: /Clear Search/i }).first();
@@ -364,7 +389,7 @@ test.describe('Inbox — full regression', () => {
   // I9 — refresh emails
   test('refresh emails and wait', async ({ page }) => {
     await page.getByLabel('Refresh emails').click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify page responded to refresh — emails or empty state visible
     const bodyText = await page.locator('body').innerText();

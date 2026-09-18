@@ -75,23 +75,16 @@ test.describe('Tasks Page', () => {
     const filterYou = page.getByLabel('Filter by You');
     await expect(filterYou).toBeVisible({ timeout: 5000 });
     await filterYou.click();
-    await page.waitForLoadState('networkidle');
-
-    // After filter, task list should still be visible (may have fewer/more tasks)
-    const filteredCount = await page.getByText('Do it for me').count();
+    await page.waitForLoadState('domcontentloaded');
 
     // Click again to deselect filter
     await filterYou.click();
-    await page.waitForLoadState('networkidle');
 
     // Wait for tasks to reload after unfiltering (8000+ tasks = slow render)
-    let reloaded = false;
-    for (let i = 0; i < 6 && !reloaded; i++) {
-      reloaded = await page.getByText('Do it for me').first().isVisible().catch(() => false)
-        || await page.getByText(/tasks?\s*remaining/i).first().isVisible().catch(() => false);
-      if (!reloaded) await page.waitForLoadState('networkidle');
-    }
-    expect(reloaded).toBe(true);
+    const reloadedMarker = page.getByText('Do it for me').first()
+      .or(page.getByText(/tasks?\s*remaining/i).first())
+      .first();
+    await expect(reloadedMarker).toBeVisible({ timeout: 30_000 });
   });
 
   // T3 — Search tasks
@@ -135,7 +128,7 @@ test.describe('Tasks Page', () => {
 
     // Click Board view
     await boardBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Board view should now be active — verify board-like layout appears
     // (columns, kanban-style elements)
@@ -201,7 +194,7 @@ test.describe('Tasks Page', () => {
     const urgentOption = page.getByRole('option', { name: 'Urgent' });
     await expect(urgentOption).toBeVisible({ timeout: 5000 });
     await urgentOption.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Step 5: Verify filter is applied
     // — "Clear All" button should be visible
@@ -225,7 +218,7 @@ test.describe('Tasks Page', () => {
 
     // Click "+ Add Task"
     await page.getByLabel('Add new task').click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // A task creation form/modal/drawer should appear
     // Look for title input or "Add Task" form elements
@@ -290,7 +283,7 @@ test.describe('Tasks Page', () => {
     const addBtn = page.getByRole('button', { name: 'Add Task' });
     if (await addBtn.isVisible().catch(() => false)) {
       await addBtn.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
     }
 
     // Verify task was added — search for it
@@ -301,18 +294,11 @@ test.describe('Tasks Page', () => {
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForLoadState('networkidle');
 
     // Verify search responded with results
     const matchEl = page.getByText(/matching\s*tasks?\s*found/i).first();
     const taskEl = page.getByText('ZZTEST task from tasks page').first();
-    let found = false;
-    for (let i = 0; i < 4 && !found; i++) {
-      found = await matchEl.isVisible().catch(() => false)
-        || await taskEl.isVisible().catch(() => false);
-      if (!found) await page.waitForLoadState('networkidle');
-    }
-    expect(found).toBe(true);
+    await expect(matchEl.or(taskEl).first()).toBeVisible({ timeout: 20_000 });
   });
 
   // T7 — Click a task row to open detail panel
@@ -341,7 +327,7 @@ test.describe('Tasks Page', () => {
 
     if (firstTaskTitle) {
       await page.mouse.click(firstTaskTitle.x, firstTaskTitle.y);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // A detail panel/drawer should open — check for new visible elements
       const detailVisible = await page.evaluate(() => {
@@ -413,18 +399,11 @@ test.describe('Tasks Page', () => {
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForLoadState('networkidle');
 
     // Wait for search results to load
     const taskEl = page.getByText('ZZTEST task from tasks page').first();
     const matchEl = page.getByText(/matching\s*tasks?\s*found/i).first();
-    let found = false;
-    for (let i = 0; i < 4 && !found; i++) {
-      found = await matchEl.isVisible().catch(() => false)
-        || await taskEl.isVisible().catch(() => false);
-      if (!found) await page.waitForLoadState('networkidle');
-    }
-    expect(found).toBe(true);
+    await expect(matchEl.or(taskEl).first()).toBeVisible({ timeout: 20_000 });
 
     // Click the status circle on the ZZTEST task row
     const circlePos = await page.evaluate(() => {
@@ -447,7 +426,7 @@ test.describe('Tasks Page', () => {
     const inProgressItem = page.getByRole('menuitem', { name: 'In progress' });
     await expect(inProgressItem).toBeVisible({ timeout: 5000 });
     await inProgressItem.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Now undo — find the same task's status icon and click it again
     // After status change the icon may look different (half-filled or colored)
@@ -490,7 +469,7 @@ test.describe('Tasks Page', () => {
     const doItBtn = page.getByText('Do it for me').first();
     await expect(doItBtn).toBeVisible({ timeout: 10_000 });
     await doItBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Some action should occur — a panel, a confirmation, or the task changes state
     const bodyText = await page.locator('body').innerText();
@@ -509,7 +488,7 @@ test.describe('Tasks Page', () => {
     const viewAll = page.getByText('View All', { exact: true }).first();
     if (await viewAll.isVisible().catch(() => false)) {
       await viewAll.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // After clicking View All, more tasks should load
       const doItBtns = page.getByText('Do it for me');
@@ -594,7 +573,7 @@ test.describe('Tasks Page', () => {
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     await searchInput.fill('ZZTEST task from tasks page');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for search results
     try {

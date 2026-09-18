@@ -133,17 +133,18 @@ test.describe('Team Page', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await tp.changeRoleSaveBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForLoadState('domcontentloaded');
 
-    const updatedRole = await tp.roleDropdowns.first().textContent();
-    expect(updatedRole.trim()).not.toBe(currentRole.trim());
+    await expect.poll(
+      async () => (await tp.roleDropdowns.first().textContent()).trim(),
+      { timeout: 15_000 }
+    ).not.toBe(currentRole.trim());
   });
 
   test('T3 — undo role change back to original', async ({ page }) => {
@@ -176,17 +177,18 @@ test.describe('Team Page', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await tp.changeRoleSaveBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForLoadState('domcontentloaded');
 
-    const restoredRole = await tp.roleDropdowns.first().textContent();
-    expect(restoredRole.trim()).not.toBe(currentRole.trim());
+    await expect.poll(
+      async () => (await tp.roleDropdowns.first().textContent()).trim(),
+      { timeout: 15_000 }
+    ).not.toBe(currentRole.trim());
   });
 
   // ╔═══════════════════════════════════════════════════╗
@@ -230,7 +232,7 @@ test.describe('Team Page', () => {
 
     await expect(tp.sendInvitesBtn).toBeEnabled({ timeout: 3000 });
     await tp.sendInvitesBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
@@ -263,16 +265,19 @@ test.describe('Team Page', () => {
 
     await expect(tp.revokeConfirmBtn).toBeVisible({ timeout: 5000 });
     await tp.revokeConfirmBtn.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+
+    // The confirm dialog's own prompt text also contains the target email,
+    // so check the dialog has actually closed (unique text) before checking
+    // the list — otherwise "not visible" is ambiguous across both matches.
+    await expect(page.getByText(/Are you sure you want to revoke/i)).not.toBeVisible({ timeout: 10_000 });
 
     await page.evaluate(() => {
       document.documentElement.style.pointerEvents = '';
       document.body.style.pointerEvents = '';
       document.querySelectorAll('.fixed.inset-0').forEach(el => { el.style.pointerEvents = 'none'; });
     }).catch(() => {});
-    await page.waitForLoadState('domcontentloaded');
 
-    const zztestGone = await page.getByText('zztest-invite@example.com').isVisible().catch(() => false);
-    expect(zztestGone).toBe(false);
+    await expect(page.locator('text=zztest-invite@example.com >> visible=true').first()).not.toBeVisible({ timeout: 10_000 });
   });
 });

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python generate_comprehensive_tests.py)"
+      "Bash(python generate_comprehensive_tests.py)",
+      "Bash(npx playwright *)"
     ]
   }
 }
